@@ -37,18 +37,27 @@ sub Process{
 		$conn->Process(0);
 	}
 }
+#this should load a module by name if it's not already loaded, 
 sub load{
 	my $self = shift;
 	my $conn = shift;
-	my $mod = shift;
-	my $finder = Module::PluginFinder->new(
-		search_path => 'Artemis::Plugin',
-		filter => sub {
-			my ( $module, $searchkey ) = @_;
-			$module->can( $searchkey );
-		},
-	);
-	my $foo = $finder->construct("foo");
+	my $module = "Artemis::Plugin::".shift;
+	my $spawn = shift;
+	eval "use $module;";
+	if($@){
+		print STDOUT "failed to load $module\n$@\n";
+		return 0;
+	}
+	if(exists($self->{modules}{$module})){
+		if($spawn){
+			$conn->{modules}{$module} = $module->new();
+		}else{
+			$conn->{modules}{$module} = $self->{modules}{$module};
+		}
+	}else{
+		$self->{modules}{$module} = $conn->{modules}{$module} = $module->new();
+	}
+	return 1;
 }
 # incoming will handle all traffic from Artemis::Connection modules to Artemis::Plugin modules.
 # called like $self->{main}->incoming($self, a simple name (e.g. jercos), the message, then any data that needs to be passed back to outgoing.);
@@ -60,7 +69,11 @@ sub incoming{
 	# at this point, @_ contains anything, or nothing at the discretion of the Artemis::Connection::* module that should have called this. 
 	# this data is unique to every module, and should not be interchanged between modules, unless you know what you (are) doing.
 	# if you need to send data accross networks, an Artemis::Plugin should call connection specific send functions.
-	# <TODO>loop over modules assigned to $conn, calling $conn->outgoing(message from module, @_) for each one that returns something, instead of this :P </TODO>
-	$conn->outgoing($msg,@_);
+	print "Called by $conn (".$conn->{nick}.")\n";
+	for(values %{$conn->{modules}}){
+		print "Testing over $_\n";
+		my $output;
+		$conn->outgoing($output,@_) if $output = $_->message($msg);
+	}
 }
 1;
