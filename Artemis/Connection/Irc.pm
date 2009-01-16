@@ -5,15 +5,18 @@ sub new{
 	my $self = {
 		host=>"localhost",	#server to connect to
 		port=>"6667",		#port to connect on
-		nick=>"artemis_",	#nick!user@host, Real name: realname, if you don't get it, ignore these.
+		nick=>"artemis",	#nick!user@host, Real name: realname, if you don't get it, ignore these.
 		user=>"artemis",
 		realname=>"Artemis v2.0, Jeremy Sturdivant (jercos)",
 		serverpass=>undef,	#if this is set, a PASS will be sent after USER and NICK. ignore this unless you want an IRCOP bot.
 		nickpass=>undef,	#password to send to nickserv. leave it undef to not identify to nickserv
 		autoconnect=>1,		#set to a false value to not immediately call $self->connect(), you'll have to call it later.
-		onconnect=>sub{1},	#this will get called on an "end of MOTD" command from the server, which is what triggers identing and channel joins
+		onconnect=>sub{	#this will get called on an "end of MOTD" command from the server, or a "no MOTD" error.
+			my $self = shift;
+			$self->send("JOIN :$_") for @{$self->{autojoin}};
+		},
 		sock=>undef,		#this holds an IO::Socket::INET object, or an IO::Handle, or similar.
-		join=>[],		#what channels do we want to join automatically?
+		autojoin=>[],		#what channels do we want to join automatically?
 		@_			#and finally, suck up any key=>value pairs passed in, and overwrite default values.
 	};
 	bless($self,$class);
@@ -58,7 +61,12 @@ sub send{
 	print STDERR join("",map{"<- $_\n"}@_);
 	print {$self->{sock}} join("",map{"$_\n"}@_); # this means $self->send("JOIN #foo","PRIVMSG #foo :howdy, everbody!") works as expected :P
 }
-#
+#data headed outward to the network. this defines the scheme for extra data for Artemis::outgoing
+sub outgoing{
+	my $self = shift;
+	my($msg, $replyto) = @_;
+	$self->send("NOTICE $replyto :$msg");
+}
 #this now does the actual parsing of incoming messages :)
 sub irc{
 	my $self = shift;
@@ -69,6 +77,17 @@ sub irc{
 	my($special,$main,$longarg) = split(/:/,$data,3);
 	warn "---+ ".$self->{nick}." rcvd from ".$self->{host}.": '$special:$main:$longarg'" if $special;
 	my($mask,$command,@args) = split(/ +/,$main);
-	
+	if($mask =~ /!/){
+		my($nick, $user, $host) = $mask =~ /^([^!])+!([^@]+)@(.*)$/;
+	}else{
+		my($nick, $user, $host) = ($mask,"@",$mask);
+	}
+	if($command eq "PRIVMSG"){
+		my $replyto = ($args[0] eq $self->{nick} && $args[0] =~ /^[^#]/)?$nick:$args[0];
+		$self->{main}->incoming($self,$nick,$longarg,$replyto);
+	}
+	if($command eq "376" or $command eq "422"){
+		$self->{onconnect}->($self);
+	}
 }
 1;
