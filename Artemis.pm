@@ -68,12 +68,9 @@ sub incoming{
 	my $name = shift;
 	my $msg = shift;
 	my $pm = shift;
-	# at this point, @_ contains anything, or nothing at the discretion of the Artemis::Connection::* module that should have called this. 
-	# this data is unique to every module, and should not be interchanged between modules, unless you know what you (are) doing.
-	# if you need to send data accross networks, an Artemis::Plugin should call connection specific send functions.
+	my $replyto = shift;
 	for(values %{$conn->{modules}}){
-		my $output;
-		$conn->outgoing($output,@_) if $output = $_->message($msg, $pm);
+		$_->message($conn, $replyto, $name, $msg, $pm);
 	}
 }
 1;

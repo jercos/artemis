@@ -8,10 +8,9 @@ sub new{
 }
 sub message{
 	my $self = shift;
-	my $msg = shift;
-	my $pm = shift;
-	return unless $msg =~ /^\)([^ ]*)/;
-	return &{$self->{$1}}() if exists $self->{$1};
+	my($conn,$to,$name,$msg,$pm) = @_;
+	return unless $msg =~ /^\)([^ ]*)(.*)/;
+	$conn->sendto($to,$self->{$1}($2)) if exists $self->{$1} && ref($self->{$1}) eq "CODE";
 	0;
 }
 1;
