@@ -70,7 +70,7 @@ sub incoming{
 	my $pm = shift;
 	my $replyto = shift;
 	for(values %{$conn->{modules}}){
-		$_->message($conn, $replyto, $name, $msg, $pm);
+		$_->input($conn, $replyto, $name, $msg, $pm);
 	}
 }
 1;

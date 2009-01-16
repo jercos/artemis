@@ -68,7 +68,7 @@ sub send{
 	print {$self->{sock}} join("",map{"$_\n"}@_); # this means $self->send("JOIN #foo","PRIVMSG #foo :howdy, everbody!") works as expected :P
 }
 #data headed outward to the network. this defines the scheme for extra data for Artemis::outgoing
-sub sendto{
+sub message{
 	my $self = shift;
 	my($replyto, $msg) = @_;
 	$self->send("NOTICE $replyto :$_") for split(/[\r\n]+/,$msg);
