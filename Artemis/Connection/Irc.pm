@@ -89,14 +89,13 @@ sub irc{
 	my($special,$main,$longarg) = split(/:/,$data,3);
 	warn "---+ ".$self->{nick}." rcvd from ".$self->{host}.": '$special:$main:$longarg'" if $special;
 	my($mask,$command,@args) = split(/ +/,$main);
+	my($nick, $user, $host) = ($mask,"@",$mask);
 	if($mask =~ /!/){
-		my($nick, $user, $host) = $mask =~ /^([^!])+!([^@]+)@(.*)$/;
-	}else{
-		my($nick, $user, $host) = ($mask,"@",$mask);
+		($nick, $user, $host) = $mask =~ /^([^!]+)!([^@]+)@(.*)$/;
 	}
 	if($command eq "PRIVMSG"){
 		my $replyto = ($args[0] eq $self->{nick} && $args[0] =~ /^[^#]/)?$nick:$args[0];
-		$self->{main}->incoming($self,$nick,$longarg,$replyto);
+		$self->{main}->incoming($self,$nick,$longarg,"maybe",$replyto);
 	}elsif($command eq "376" or $command eq "422"){
 		$self->{onconnect}->($self);
 	}else{

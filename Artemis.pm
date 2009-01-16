@@ -10,7 +10,7 @@ sub new{
 }
 sub connect{
 	# so things don't explode if somone stupid does Artemis::connect(); hopefully.
-	my $self = shift if ref($_[0]);
+	my $self = shift;
 	# a fairly generic Module::PluginFinder setup, from what I can tell...
 	my $finder = Module::PluginFinder->new(
 		search_path => 'Artemis::Connection',
@@ -60,20 +60,20 @@ sub load{
 	return 1;
 }
 # incoming will handle all traffic from Artemis::Connection modules to Artemis::Plugin modules.
-# called like $self->{main}->incoming($self, a simple name (e.g. jercos), the message, then any data that needs to be passed back to outgoing.);
+# called like $self->{main}->incoming($self, a simple name (e.g. jercos), the message, 
+# A true value if this is a private message (as opposed to one from a chatroom), then any data that needs to be passed back to outgoing.);
 sub incoming{
 	my $self = shift;
 	my $conn = shift;
 	my $name = shift;
 	my $msg = shift;
+	my $pm = shift;
 	# at this point, @_ contains anything, or nothing at the discretion of the Artemis::Connection::* module that should have called this. 
 	# this data is unique to every module, and should not be interchanged between modules, unless you know what you (are) doing.
 	# if you need to send data accross networks, an Artemis::Plugin should call connection specific send functions.
-	print "Called by $conn (".$conn->{nick}.")\n";
 	for(values %{$conn->{modules}}){
-		print "Testing over $_\n";
 		my $output;
-		$conn->outgoing($output,@_) if $output = $_->message($msg);
+		$conn->outgoing($output,@_) if $output = $_->message($msg, $pm);
 	}
 }
 1;
