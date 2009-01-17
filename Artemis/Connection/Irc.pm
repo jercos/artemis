@@ -60,12 +60,15 @@ sub Process{
 		$self->irc($line);
 	}
 }
-#a raw send, for exposing to the outside world, and shortening 
+#a raw send, for exposing to the outside world, and shortening. Never call a Connection module's send() without checking the ref() to make sure it matches the protocol you expect.
 sub send{
 	my $self = shift;
 	return 0 unless defined $self->{sock};
-	$self->debug(join("",map{"<- $_\n"}@_),0);
-	print {$self->{sock}} join("",map{"$_\n"}@_); # this means $self->send("JOIN #foo","PRIVMSG #foo :howdy, everbody!") works as expected :P
+	for(@_){ # I like this better than map{}@_, tbh.
+		print STDERR "<- $_";
+		print {$self->{sock}} "$_\n";
+		print "\n";
+	}
 }
 #data headed outward to the network. this defines the scheme for extra data for Artemis::outgoing
 sub message{
@@ -73,18 +76,12 @@ sub message{
 	my($replyto, $msg) = @_;
 	$self->send("NOTICE $replyto :$_") for split(/[\r\n]+/,$msg);
 }
-#typing print STDOUT was getting boring.
-sub debug{
-	my $self = shift;
-	my($msg,$level) = @_;
-	print STDOUT $msg if $main::DEBUG>$level;
-}
 #this now does the actual parsing of incoming messages :)
 sub irc{
 	my $self = shift;
 	my $data = shift;
 	$data =~ s/[\r\n]//g;
-	$self->debug(" ->$data\n",0);
+	print STDERR " ->$data\n";
 	return $self->send($data) if $data =~ s/^PING/PONG/; 
 	my($special,$main,$longarg) = split(/:/,$data,3);
 	warn "---+ ".$self->{nick}." rcvd from ".$self->{host}.": '$special:$main:$longarg'" if $special;
@@ -98,8 +95,10 @@ sub irc{
 		$self->{main}->incoming($self,$nick,$longarg,"maybe",$replyto);
 	}elsif($command eq "376" or $command eq "422"){
 		$self->{onconnect}->($self);
+	}elsif($command eq ""){
+
 	}else{
-		$self->debug("++++ TODO: impliment '$command'\n",0);
+		print STDERR "++++ TODO: impliment '$command'\n";
 	}
 }
 1;
