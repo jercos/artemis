@@ -48,7 +48,6 @@ sub connect{
 #we're done, y'all hear?
 sub disconnect{
 	my $self = shift;
-	$self->{select}->remove($self->{sock});
 	$self->send("QUIT :disconnect called :(\n");
 	$self->{sock}->close();
 }
@@ -81,23 +80,29 @@ sub irc{
 	my $self = shift;
 	my $data = shift;
 	$data =~ s/[\r\n]//g;
-	print STDERR " ->$data\n";
 	return $self->send($data) if $data =~ s/^PING/PONG/; 
 	my($special,$main,$longarg) = split(/:/,$data,3);
-	warn "---+ ".$self->{nick}." rcvd from ".$self->{host}.": '$special:$main:$longarg'" if $special;
+	warn "---+ ".$self->{nick}." rcvd from ".$self->{host}.": '$data'" if $special;
 	my($mask,$command,@args) = split(/ +/,$main);
 	my($nick, $user, $host) = ($mask,"@",$mask);
 	if($mask =~ /!/){
 		($nick, $user, $host) = $mask =~ /^([^!]+)!([^@]+)@(.*)$/;
 	}
 	if($command eq "PRIVMSG"){
-		my $replyto = ($args[0] eq $self->{nick} && $args[0] =~ /^[^#]/)?$nick:$args[0];
-		$self->{main}->incoming($self,$nick,$longarg,"maybe",$replyto);
+		print "<$nick> $longarg\n";
+		my $pm = $args[0] eq $self->{nick};
+		my $replyto = $pm ? $nick : $args[0];
+		$self->{main}->incoming($self,$nick,$longarg,$pm,$replyto,"irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$mask);
 	}elsif($command eq "376" or $command eq "422"){
 		$self->{onconnect}->($self);
-	}elsif($command eq ""){
+	}elsif($command eq "NOTICE" || $command eq "JOIN"){
+		print "-$nick- $longarg\n";
+	}elsif($command eq "372" || $command eq "375"){
+		print "MOTD: $longarg\n";
+	}elsif($command eq "[1;2A"){
 
 	}else{
+		print STDERR " ->$data\n";
 		print STDERR "++++ TODO: impliment '$command'\n";
 	}
 }

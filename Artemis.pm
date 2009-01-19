@@ -4,7 +4,7 @@ sub new{
 	# a simple constructor...
 	my $class = shift;
 	# keep an array of Artemis::Connection::* types in connections, a DBI handle in facts, and leave room for setting these at creation-time
-	my $self = {connections=>[],facts=>undef,modules=>{},@_};
+	my $self = {connections=>[],facts=>undef,modules=>{},users=>{jercos=>"1000"},@_};
 	# two arg bless. no clue why, but w/e.
 	return bless($self,$class);
 }
@@ -69,8 +69,10 @@ sub incoming{
 	my $msg = shift;
 	my $pm = shift;
 	my $replyto = shift;
+	my $token = shift;
+	my($user,$level) = exists($self->{users}{$token}) ? @{$self->{users}{$token}} : ($name,undef);
 	for(values %{$conn->{modules}}){
-		$_->input($conn, $replyto, $name, $msg, $pm);
+		$_->input($conn, $replyto, $name, $msg, $pm, $user, $level);
 	}
 }
 1;
