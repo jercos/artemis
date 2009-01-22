@@ -32,9 +32,9 @@ sub Process{
 	}else{
 		$input = ReadLine(-1);
 	}
+	$input =~ s/[\r\n]//g;
 	return unless $input;
 	$self->{main}->incoming($self,"cons",$input,1,"cons","term://");
-	print "sent '$input'\n";
 }
 
 sub send{

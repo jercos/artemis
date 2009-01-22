@@ -80,7 +80,9 @@ sub irc{
 	my $self = shift;
 	my $data = shift;
 	$data =~ s/[\r\n]//g;
-	return $self->send($data) if $data =~ s/^PING/PONG/; 
+	print "oh look: '$data'" if $data =~ /376/;
+	return $self->send($data) if $data =~ s/^PING/PONG/;
+	return $self->{sock}->close() if $data =~ /^ERROR/;
 	my($special,$main,$longarg) = split(/:/,$data,3);
 	warn "---+ ".$self->{nick}." rcvd from ".$self->{host}.": '$data'" if $special;
 	my($mask,$command,@args) = split(/ +/,$main);
@@ -95,15 +97,17 @@ sub irc{
 		$self->{main}->incoming($self,$nick,$longarg,$pm,$replyto,"irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$mask);
 	}elsif($command eq "376" or $command eq "422"){
 		$self->{onconnect}->($self);
-	}elsif($command eq "NOTICE" || $command eq "JOIN"){
+	}elsif($command eq "NOTICE"){
 		print "-$nick- $longarg\n";
+	}elsif($command eq "JOIN"){
+		print "-!- $nick [$mask] has joined $longarg\n";
 	}elsif($command eq "372" || $command eq "375"){
 		print "MOTD: $longarg\n";
 	}elsif($command eq "[1;2A"){
 
 	}else{
 		print STDERR " ->$data\n";
-		print STDERR "++++ TODO: impliment '$command'\n";
+	#	print STDERR "++++ TODO: impliment '$command'\n";
 	}
 }
 1;
