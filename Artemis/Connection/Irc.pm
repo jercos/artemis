@@ -73,7 +73,7 @@ sub send{
 sub message{
 	my $self = shift;
 	my($replyto, $msg) = @_;
-	$self->send("NOTICE $replyto :$_") for split(/[\r\n]+/,$msg);
+	$self->send("PRIVMSG $replyto :$_") for split(/[\r\n]+/,$msg);
 }
 #this now does the actual parsing of incoming messages :)
 sub irc{
@@ -101,6 +101,7 @@ sub irc{
 		print "-$nick- $longarg\n";
 	}elsif($command eq "JOIN"){
 		print "-!- $nick [$mask] has joined $longarg\n";
+		$self->send("MODE $longarg +v $nick");
 	}elsif($command eq "372" || $command eq "375"){
 		print "MOTD: $longarg\n";
 	}elsif($command eq "[1;2A"){
