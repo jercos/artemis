@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 push @INC, ".";
 use Artemis;
 $DEBUG = 1;
@@ -6,7 +7,7 @@ $art->connect(
 	{type=>"term"},
 	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#boats"]},
 #	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2_",autojoin=>["#boats"]},
-	{type=>"jabber",host=>"jercos.dyndns.org",nick=>"artemis",pass=>"noonebutme"},
+#	{type=>"jabber",host=>"jercos.dyndns.org",nick=>"artemis",pass=>"noonebutme"},
 );
 while(1){
 $art->Process();
