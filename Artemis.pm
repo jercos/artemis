@@ -4,7 +4,15 @@ sub new{
 	# a simple constructor...
 	my $class = shift;
 	# keep an array of Artemis::Connection::* types in connections, a DBI handle in facts, and leave room for setting these at creation-time
-	my $self = {connections=>[],facts=>undef,modules=>{},users=>{jercos=>"1000"},logins=>{"term://"=>"jercos"},@_};
+	my $self = {
+		connections=>[],
+		facts=>undef,
+		modules=>{},
+		users=>{jercos=>"1000"},
+		logins=>{"term://"=>"jercos"},
+		pass=>{jercos=>"CVlgTkDiwUmUPzmy3GsU2yz7/WE"},
+		@_
+		};
 	# two arg bless. no clue why, but w/e.
 	return bless($self,$class);
 }
