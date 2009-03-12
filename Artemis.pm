@@ -13,11 +13,17 @@ sub new{
 		pass=>{jercos=>"CVlgTkDiwUmUPzmy3GsU2yz7/WE"},
 		@_
 		};
-	# two arg bless. no clue why, but w/e.
+	open USERDB, "users.txt";
+	while(<USERDB>){
+		my($user,$pass,$level) =split(/\|/);
+		$self->{users}{$user} = $level;
+		$self->{pass}{$user} = $pass;
+	}
+	close USERDB;
+	# two arg bless. I don't think anything will ever need to inherit from Artemis, but w/e
 	return bless($self,$class);
 }
 sub connect{
-	# so things don't explode if somone stupid does Artemis::connect(); hopefully.
 	my $self = shift;
 	# a fairly generic Module::PluginFinder setup, from what I can tell...
 	my $finder = Module::PluginFinder->new(
