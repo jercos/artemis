@@ -14,6 +14,7 @@ sub new{
 		onconnect=>sub{	#this will get called on an "end of MOTD" command from the server, or a "no MOTD" error.
 			my $self = shift;
 			$self->send("JOIN :$_") for @{$self->{autojoin}};
+			$self->send("MODE ".($self->{nick})." +B");
 			$self->{main}->load($self,"Core");
 		},
 		sock=>undef,		#this holds an IO::Socket::INET object, or an IO::Handle, or similar. anything that works inside readline()
@@ -51,11 +52,11 @@ sub disconnect{
 	$self->send("QUIT :disconnect called :(\n");
 	$self->{sock}->close();
 }
-#Process(0) for non-blocking, Process() for blocking, Process(0.25) to block for a quarter of a second. easy as pie.
-#This will check select, and call the appropriate method. This should be called once every few seconds at least.
+#call this every once in a while, a second or two is suitable, but this should return in under a quarter of a second unless the socket was opened blocking.
 sub Process{
 	my $self = shift;
-	while(my $line = readline($self->{sock})){
+	if(defined(my $line = readline($self->{sock}) )){
+		$line = readline($self->{sock}) while !chomp $line;
 		$self->irc($line);
 	}
 }
@@ -80,7 +81,6 @@ sub irc{
 	my $self = shift;
 	my $data = shift;
 	$data =~ s/[\r\n]//g;
-	print "oh look: '$data'" if $data =~ /376/;
 	return $self->send($data) if $data =~ s/^PING/PONG/;
 	return $self->{sock}->close() if $data =~ /^ERROR/;
 	my($special,$main,$longarg) = split(/:/,$data,3);

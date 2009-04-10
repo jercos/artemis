@@ -10,7 +10,7 @@ sub new{
 		modules=>{},
 		users=>{jercos=>"1000"},
 		logins=>{"term://"=>"jercos"},
-		pass=>{jercos=>"CVlgTkDiwUmUPzmy3GsU2yz7/WE"},
+		pass=>{},
 		@_
 		};
 	open USERDB, "users.txt";
@@ -59,7 +59,7 @@ sub load{
 	my $spawn = shift;
 	eval "use $module;";
 	if($@){
-		print STDOUT "failed to load $module\n$@\n";
+		print STDERR "failed to load $module\n$@\n";
 		return 0;
 	}
 	if(exists($self->{modules}{$module})){
