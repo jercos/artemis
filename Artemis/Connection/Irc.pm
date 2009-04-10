@@ -56,7 +56,7 @@ sub disconnect{
 sub Process{
 	my $self = shift;
 	if(defined(my $line = readline($self->{sock}) )){
-		$line = readline($self->{sock}) while !chomp $line;
+		$line .= readline($self->{sock}) while !chomp $line;
 		$self->irc($line);
 	}
 }
