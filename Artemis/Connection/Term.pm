@@ -1,5 +1,6 @@
 package Artemis::Connection::Term;
 use Term::ReadKey;
+use strict;
 sub new{
 	my $class = shift;
 	my $self = {

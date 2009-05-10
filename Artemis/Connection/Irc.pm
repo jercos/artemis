@@ -1,5 +1,6 @@
 package Artemis::Connection::Irc;
 use IO::Socket;
+use strict;
 sub new{
 	my $class = shift;
 	my $self = {
@@ -65,7 +66,7 @@ sub send{
 	my $self = shift;
 	return 0 unless defined $self->{sock};
 	for(@_){ # I like this better than map{}@_, tbh.
-		print STDERR "<- $_";
+		printf STDERR "%02d:%02d:%02d  <-%s" ,(localtime)[2,1,0] ,$_;
 		print {$self->{sock}} "$_\n";
 		print "\n";
 	}
@@ -84,30 +85,30 @@ sub irc{
 	return $self->send($data) if $data =~ s/^PING/PONG/;
 	return $self->{sock}->close() if $data =~ /^ERROR/;
 	my($special,$main,$longarg) = split(/:/,$data,3);
-	warn "---+ ".$self->{nick}." rcvd from ".$self->{host}.": '$data'" if $special;
+	printf "%02d:%02d:%02d ".$self->{nick}." rcvd from ".$self->{host}.": '$data'" if $special;
 	my($mask,$command,@args) = split(/ +/,$main);
 	my($nick, $user, $host) = ($mask,"@",$mask);
 	if($mask =~ /!/){
 		($nick, $user, $host) = $mask =~ /^([^!]+)!([^@]+)@(.*)$/;
 	}
 	if($command eq "PRIVMSG"){
-		print "<$nick> $longarg\n";
+		printf STDERR "%02d:%02d:%02d <%s> %s\n",(localtime)[2,1,0],$nick,$longarg;
 		my $pm = $args[0] eq $self->{nick};
 		my $replyto = $pm ? $nick : $args[0];
 		$self->{main}->incoming($self,$nick,$longarg,$pm,$replyto,"irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$mask);
 	}elsif($command eq "376" or $command eq "422"){
 		$self->{onconnect}->($self);
 	}elsif($command eq "NOTICE"){
-		print "-$nick- $longarg\n";
+		printf STDERR "%02d:%02d:%02d -%s- %s\n",(localtime)[2,1,0],$nick,$longarg;
 	}elsif($command eq "JOIN"){
-		print "-!- $nick [$mask] has joined $longarg\n";
+		printf STDERR "%02d:%02d:%02d -!- %s [%s] has joined %s\n",(localtime)[2,1,0],$nick,$mask,$longarg;
 		$self->send("MODE $longarg +v $nick");
 	}elsif($command eq "372" || $command eq "375"){
-		print "MOTD: $longarg\n";
-	}elsif($command eq "[1;2A"){
+		printf STDERR "%02d:%02d:%02d MOTD: %s\n",(localtime)[2,1,0],$longarg;
+	}elsif($command eq ""){
 
 	}else{
-		print STDERR " ->$data\n";
+		printf STDERR "%02d:%02d:%02d  ->%s\n",(localtime)[2,1,0],$data;
 	#	print STDERR "++++ TODO: impliment '$command'\n";
 	}
 }

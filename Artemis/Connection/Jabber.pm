@@ -1,5 +1,6 @@
 package Artemis::Connection::Jabber;
 use Net::Jabber;
+use strict;
 sub new{
 	my $class = shift;
 	my $self = {

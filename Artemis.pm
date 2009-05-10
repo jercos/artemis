@@ -8,18 +8,11 @@ sub new{
 		connections=>[],
 		facts=>undef,
 		modules=>{},
-		users=>{jercos=>"1000"},
-		logins=>{"term://"=>"jercos"},
+		users=>{root=>65536},
+		logins=>{"term://"=>"root"},
 		pass=>{},
 		@_
 		};
-	open USERDB, "users.txt";
-	while(<USERDB>){
-		my($user,$pass,$level) =split(/\|/);
-		$self->{users}{$user} = $level;
-		$self->{pass}{$user} = $pass;
-	}
-	close USERDB;
 	# two arg bless. I don't think anything will ever need to inherit from Artemis, but w/e
 	return bless($self,$class);
 }
