@@ -82,10 +82,10 @@ sub irc{
 	my $self = shift;
 	my $data = shift;
 	$data =~ s/[\r\n]//g;
+	my($special,$main,$longarg) = split(/:/,$data,3);
+	printf STDERR "%02d:%02d:%02d special data: '%s'\n",(localtime)[2,1,0],$data if $special;
 	return $self->send($data) if $data =~ s/^PING/PONG/;
 	return $self->{sock}->close() if $data =~ /^ERROR/;
-	my($special,$main,$longarg) = split(/:/,$data,3);
-	printf "%02d:%02d:%02d ".$self->{nick}." rcvd from ".$self->{host}.": '$data'" if $special;
 	my($mask,$command,@args) = split(/ +/,$main);
 	my($nick, $user, $host) = ($mask,"@",$mask);
 	if($mask =~ /!/){
