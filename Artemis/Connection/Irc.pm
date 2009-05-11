@@ -92,7 +92,14 @@ sub irc{
 		($nick, $user, $host) = $mask =~ /^([^!]+)!([^@]+)@(.*)$/;
 	}
 	if($command eq "PRIVMSG"){
-		printf STDERR "%02d:%02d:%02d <%s> %s\n",(localtime)[2,1,0],$nick,$longarg;
+		if($longarg =~ s/^\x01ACTION (.*?)\x01?$/$1/){
+			printf STDERR "%02d:%02d:%02d * %s %s\n",(localtime)[2,1,0],$nick,$longarg;
+		}elsif($longarg =~ s/^\x01([^ ]+)(.*?)\x01?$/$2/){
+			printf STDERR "%02d:%02d:%02d CTCP %s from %s: %s\n",(localtime)[2,1,0],$1,$nick,$longarg;
+			return;
+		}else{
+			printf STDERR "%02d:%02d:%02d <%s> %s\n",(localtime)[2,1,0],$nick,$longarg;
+		}
 		my $pm = $args[0] eq $self->{nick};
 		my $replyto = $pm ? $nick : $args[0];
 		$self->{main}->incoming($self,$nick,$longarg,$pm,$replyto,"irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$mask);
@@ -105,8 +112,13 @@ sub irc{
 		$self->send("MODE $longarg +v $nick");
 	}elsif($command eq "372" || $command eq "375"){
 		printf STDERR "%02d:%02d:%02d MOTD: %s\n",(localtime)[2,1,0],$longarg;
-	}elsif($command eq ""){
-
+	}elsif($command eq "NICK"){
+		if($nick eq $self->{nick}){
+			$self->{nick} = $longarg;
+			printf STDERR "%02d:%02d:%02d changed nicks to %s\n",(localtime)[2,1,0], $longarg;
+		}else{
+			printf STDERR "%02d:%02d:%02d * %s is now known as %s\n",(localtime)[2,1,0],$nick,$longarg;
+		}
 	}else{
 		printf STDERR "%02d:%02d:%02d  ->%s\n",(localtime)[2,1,0],$data;
 	#	print STDERR "++++ TODO: impliment '$command'\n";

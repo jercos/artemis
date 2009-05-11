@@ -16,7 +16,7 @@ $SIG{INT}=sub{exit};
 END{
 	open USERDB, ">users.db";
 	for(keys %{$art->{users}}){
-		print USERDB pack("Z*Z*n",$_,$art->{pass}{$_},$art->{users}{$_}),"\n";
+		print USERDB pack("Z*Z*n",$_,$art->{pass}{$_},$art->{users}{$_}),"\n" unless lc($_) eq "root";
 	}
 }
 # And now, we load the user db. note the simple pack/unpack methodology for the example.
