@@ -65,7 +65,9 @@ sub Process{
 sub send{
 	my $self = shift;
 	return 0 unless defined $self->{sock};
-	for(@_){ # I like this better than map{}@_, tbh.
+	for(@_){
+		$_ = "$_";
+		s/[\r\n]/\\n/g;
 		printf STDERR "%02d:%02d:%02d  <-%s" ,(localtime)[2,1,0] ,$_;
 		print {$self->{sock}} "$_\n";
 		print "\n";
@@ -75,7 +77,10 @@ sub send{
 sub message{
 	my $self = shift;
 	my($replyto, $msg) = @_;
-	$self->send("PRIVMSG $replyto :$_") for split(/[\r\n]+/,$msg);
+	for(split(/[\r\n]+/,$msg)){
+		printf STDERR "%02d:%02d:%02d <%s:%s> %s\n" ,(localtime)[2,1,0],$self->{nick} ,$replyto ,$_;
+		print {$self->{sock}} "PRIVMSG $replyto :$_\n";
+	}
 }
 #this now does the actual parsing of incoming messages :)
 sub irc{
@@ -93,12 +98,17 @@ sub irc{
 	}
 	if($command eq "PRIVMSG"){
 		if($longarg =~ s/^\x01ACTION (.*?)\x01?$/$1/){
-			printf STDERR "%02d:%02d:%02d * %s %s\n",(localtime)[2,1,0],$nick,$longarg;
+			printf STDERR "%02d:%02d:%02d * %s:%s %s\n",(localtime)[2,1,0],$nick,$args[0],$longarg;
 		}elsif($longarg =~ s/^\x01([^ ]+)(.*?)\x01?$/$2/){
 			printf STDERR "%02d:%02d:%02d CTCP %s from %s: %s\n",(localtime)[2,1,0],$1,$nick,$longarg;
+			if($1 eq "PING"){
+				$self->send("NOTICE $nick :\x01$1 $longarg\x01");
+			}elsif($1 eq "TIME"){
+				$self->send("NOTICE $nick :\x01$1 ".(localtime)."\x01");
+			}
 			return;
 		}else{
-			printf STDERR "%02d:%02d:%02d <%s> %s\n",(localtime)[2,1,0],$nick,$longarg;
+			printf STDERR "%02d:%02d:%02d <%s:%s> %s\n",(localtime)[2,1,0],$nick,$args[0],$longarg;
 		}
 		my $pm = $args[0] eq $self->{nick};
 		my $replyto = $pm ? $nick : $args[0];
