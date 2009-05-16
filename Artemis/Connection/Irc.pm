@@ -99,12 +99,27 @@ sub irc{
 	if($command eq "PRIVMSG"){
 		if($longarg =~ s/^\x01ACTION (.*?)\x01?$/$1/){
 			printf STDERR "%02d:%02d:%02d * %s:%s %s\n",(localtime)[2,1,0],$nick,$args[0],$longarg;
-		}elsif($longarg =~ s/^\x01([^ ]+)(.*?)\x01?$/$2/){
+		}elsif($longarg =~ s/^\x01([^ \x01]+)(.*?)\x01?[\r\n]*$/$2/){
 			printf STDERR "%02d:%02d:%02d CTCP %s from %s: %s\n",(localtime)[2,1,0],$1,$nick,$longarg;
 			if($1 eq "PING"){
 				$self->send("NOTICE $nick :\x01$1 $longarg\x01");
 			}elsif($1 eq "TIME"){
+				print "Got a TIME.\n";
 				$self->send("NOTICE $nick :\x01$1 ".(localtime)."\x01");
+			}elsif($1 eq "VERSION"){
+				my $ver = "Artemis ";
+				if($Artemis::VERSION){
+					$ver .= "v$Artemis::VERSION";
+				}elsif(-e './.bzr/branch/last-revision'){
+					open REV, '<', './.bzr/branch/last-revision';
+					my $rev = <REV>;
+					chomp($rev);
+					$ver .= "r$rev";
+					close REV;
+				}else{
+					$ver .= "versionless trunk"
+				}
+				$self->send("NOTICE $nick :\x01$1 $ver\x01");
 			}
 			return;
 		}else{
@@ -121,7 +136,7 @@ sub irc{
 		printf STDERR "%02d:%02d:%02d -!- %s [%s] has joined %s\n",(localtime)[2,1,0],$nick,$mask,$longarg;
 		$self->send("MODE $longarg +v $nick");
 	}elsif($command eq "372" || $command eq "375"){
-		printf STDERR "%02d:%02d:%02d MOTD: %s\n",(localtime)[2,1,0],$longarg;
+		push @{$self->{MOTD}}, sprintf "%02d:%02d:%02d %s\n",(localtime)[2,1,0],$longarg;
 	}elsif($command eq "NICK"){
 		if($nick eq $self->{nick}){
 			$self->{nick} = $longarg;

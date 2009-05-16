@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-push @INC, ".";
 use Artemis;
 # main::DEBUG was probably a horrible idea, and I should write it out, but it's rather hardcoded.
 # undef or false for a slightly quieter artemis.

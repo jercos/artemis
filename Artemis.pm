@@ -27,11 +27,11 @@ sub connect{
 		},
 	);
 	# so that multiple things can be connected to at once. magical, no?
-	for(@_){
+	for my $item(@_){
 		# called like $art->connect({...}); not $art->connect(...);
-		next unless ref($_) eq "HASH";
+		next unless ref($item) eq "HASH";
 		eval{
-			my $conn = $finder->construct($_->{type},%$_,main=>$self);
+			my $conn = $finder->construct($item->{type},%$item,main=>$self);
 			push @{$self->{connections}}, $conn if $conn;
 		};
 		warn $@ if $@;
@@ -82,8 +82,8 @@ sub incoming{
 		my $username = $self->{logins}{$token};
 		($user,$level)=($username,$self->{users}{$username});
 	}
-	for(values %{$conn->{modules}}){
-		$_->input($conn, $replyto, $name, $msg, $pm, $user, $level, $token);
+	for my $module(values %{$conn->{modules}}){
+		$module->input($conn, $replyto, $name, $msg, $pm, $user, $level, $token);
 	}
 }
 1;
