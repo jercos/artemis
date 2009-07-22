@@ -1,5 +1,6 @@
 package Artemis;
 use Module::PluginFinder;
+use Artemis::Message;
 sub new{
 	# a simple constructor...
 	my $class = shift;
@@ -48,10 +49,11 @@ sub Process{
 sub load{
 	my $self = shift;
 	my $conn = shift;
-	my $module = "Artemis::Plugin::".shift;
+	my $name = shift;
+	my $module = "Artemis::Plugin::".$name;
+	my $file = "./Artemis/Plugin/$name.pm";
 	my $spawn = shift;
-	eval "use $module;";
-	if($@){
+	unless(do $file){
 		print STDERR "failed to load $module\n$@\n";
 		return 0;
 	}
@@ -67,23 +69,17 @@ sub load{
 	return 1;
 }
 # incoming will handle all traffic from Artemis::Connection modules to Artemis::Plugin modules.
-# called like $self->{main}->incoming($self, a simple name (e.g. jercos), the message, 
-# A true value if this is a private message (as opposed to one from a chatroom), then any data that needs to be passed back to outgoing.);
+# called like $self->{main}->incoming($self, Artemis::Message);
 sub incoming{
 	my $self = shift;
 	my $conn = shift;
-	my $name = shift;
 	my $msg = shift;
-	my $pm = shift;
-	my $replyto = shift;
-	my $token = shift;
-	my($user,$level)=($name,undef);
-	if(exists($self->{logins}{$token})){
-		my $username = $self->{logins}{$token};
-		($user,$level)=($username,$self->{users}{$username});
+	if(exists($self->{logins}{lc $msg->token}) && $msg->token ne "null://"){
+		my $username = $self->{logins}{$msg->token};
+		$msg->auth($username,$self->{users}{$username});
 	}
 	for my $module(values %{$conn->{modules}}){
-		$module->input($conn, $replyto, $name, $msg, $pm, $user, $level, $token);
+		$module->input($conn, $msg);
 	}
 }
 1;

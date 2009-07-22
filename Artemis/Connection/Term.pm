@@ -5,6 +5,7 @@ sub new{
 	my $class = shift;
 	my $self = {
 		sock=>undef,
+		level=>65536,
 		nick=>"artemis",
 		modules=>{},
 		@_
@@ -35,7 +36,7 @@ sub Process{
 	}
 	$input =~ s/[\r\n]//g;
 	return unless $input;
-	$self->{main}->incoming($self,"cons",$input,1,"cons","term://");
+	$self->{main}->incoming($self,Artemis::Message->new(level=>$self->{level},user=>"cons",to=>"cons",text=>$input,pm=>1));
 }
 
 sub send{
@@ -45,8 +46,8 @@ sub send{
 
 sub message{
 	my $self = shift;
-	my($replyto,$msg)=@_;
-	$self->send("$replyto: $msg");
+	my($to,$msg) = @_;
+	$self->send("$to: $msg");
 }
 
 sub term{

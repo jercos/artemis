@@ -6,27 +6,34 @@ sub new{
 		commands =>{
 test => sub{return "Test passed!"},
 say => sub{return shift},
-quit => sub{my($msg, $conn, $level)=@_;return if $level<=500;$conn->disconnect()},
-quote => sub{my($msg, $conn, $level)=@_;return if $level<=500;my($ind,$raw)=split(/ +/,$msg,2);if($ind+0 eq $ind){$conn->{main}{connections}[$ind]->send($raw)}else{$conn->send($msg)}},
-login => sub{my($msg, $conn, $level, $user, $token)=@_;my($login,$pass)=split(/ +/,$msg,2);return "UTTER FAILURE" if $conn->{main}{pass}{$login} ne sha1_base64($pass);return "You are now logged in as ".($conn->{main}{logins}{$token}=$login)},
-mkuser => sub{my($m,$c,$l)=@_;return"fail"if!$l;my($lo,$le,$p)=split(/ +/,$m,3);$c->{main}{pass}{$lo}=sha1_base64($p);$c->{main}{users}{$lo}=0+$le},
-'eval' => sub{my($msg, $conn, $level)=@_;return unless $level>500;my $val = eval($msg);return $@?$@:$val},
-whoami => sub{my($msg,$conn,$level,$user,$token)=@_;return "you are logged in as $user, your level is $level" if $level;return "you are not logged in, $user."},
-gettoken => sub{my($msg,$conn,$level,$user,$token)=@_;return "$user, your token is '$token'"},
+quit => sub{return if pop->level<=500;pop->disconnect()},
+quote => sub{return if pop->level<=500;my($ind,$raw)=split(/ +/,shift,2);if(0+$ind){shift->{main}{connections}[$ind]->send($raw)}else{shift->send($raw)}},
+login => sub{my($login,$pass)=split(/ +/,shift,2);my $conn = shift;return "UTTER FAILURE" if $conn->{main}{pass}{$login} ne sha1_base64($pass);return "You are now logged in as ".($conn->{main}{logins}{pop->token}=$login)},
+mkuser => \&mkuser,
+rmuser => sub{;},
+'eval' => sub{return unless pop->level>500;return eval(shift) || $@;},
+whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in":"not logged in").", and as such your level is ".$msg->level},
+gettoken => sub{my $msg = pop;return $msg->user.", your token is '".$msg->token."'"},
 time => sub{return scalar localtime()},
-botsnack => sub{return ":D"},
 		}
 	};
 	return bless($self,$class);
 }
+sub mkuser{
+	my($input,$conn,$msg)=@_;
+	return "You must construct additional pylons." unless defined $msg->level;
+	my($login,$level,$pass)=split(/ +/,$input,3);
+	return "You must spawn more overlords." unless $msg->level > $conn->{main}{users}{$login};
+	$conn->{main}{pass}{$login}=sha1_base64($pass);
+	$conn->{main}{users}{$login}=($msg->level < $level)?$msg->level-1:$level;
+}
 sub input{
 	my $self = shift;
-	my($conn,$to,$name,$msg,$pm,$user,$level,$token) = @_;
-	my $nick = $conn->{nick};
-	$conn->message($to,":D") if $msg =~ /^botsnack/i;
-	return unless $msg =~ /^\)([^ ]+) ?(.*?)$/ || $msg =~ /^$nick[ :,]+([^ ]+) ?(.*?)$/i || ($pm && $msg =~ /^([^ ]+) ?(.*?)$/);
+	my($conn,$msg) = @_;
 	return if time - $self->{main}{floodprot}{$token} < 4;
 	$self->{main}{floodprot}{$token}=time;
-	$conn->message($to,$self->{commands}{$1}($2,$conn,$level,$user,$token,$self)) if exists $self->{commands}{$1} && ref($self->{commands}{$1}) eq "CODE";
+	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack/i;
+	return unless $msg->pm && $msg->text =~ /^([^ ]+) ?(.*?)$/;
+	$conn->message($msg->to,$self->{commands}{$1}($2,$conn,$msg)) if ref($self->{commands}{$1}) eq "CODE";
 }
 1;

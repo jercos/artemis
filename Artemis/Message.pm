@@ -2,17 +2,18 @@ package Artemis::Message;
 sub new{
 	my $class = shift;
 	my $self = {
-		text=>undef,
-		to=>undef,
-		via=>undef,
-		user=>undef,
-		pm=>0,
-		level=>0,
-		token=>"null://",
-		nick=>"artemis",
+		text=>undef,	# the content of the message
+		to=>undef,	# how do i get back to the person who sent me this? Connection module specific...
+		via=>undef,	#! who the message was sent to. for IRC this can be a channel or my nick.
+		user=>undef,	#! username for the user who sent this, or or a nickname for the recipient.
+		pm=>0,		# was this a private message, or part of a channel?
+		level=>undef,	# what level was the user who sent this? undef for not logged in.
+		token=>"null://",	# authentication string to be matched against the auth database.
+#TODO: make null:// magical.
+		nick=>"artemis",	# her nickname in the context of the message.
 		@_
 	};
-	if($self->{text}=~s/(\)|($self->{nick})[, :]+)// || $self->{via} eq $self->{nick}){
+	if($self->{text}=~s/^\)|^($self->{nick})[, :]+// || $self->{via} eq $self->{nick}){
 		$self->{pm}=1;
 	}
 	return bless($self, $class);
@@ -31,7 +32,8 @@ sub via{
 	return shift->{at};
 }
 sub user{
-	return shift->{user};
+	my $self = shift;
+	return $self->{user} || $self->{to};
 }
 sub level{
 	return shift->{level};
@@ -44,4 +46,9 @@ sub pm{
 	if(@_){$self->{pm}=!(!shift);return $self}
 	return $self->{pm};
 }
-1
+sub auth{
+	my $self = shift;
+	($self->{user},$self->{level})=@_;
+	return $self;
+}
+1;

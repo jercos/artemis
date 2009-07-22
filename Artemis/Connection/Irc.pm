@@ -127,7 +127,7 @@ sub irc{
 		}
 		my $pm = $args[0] eq $self->{nick};
 		my $replyto = $pm ? $nick : $args[0];
-		$self->{main}->incoming($self,$nick,$longarg,$pm,$replyto,"irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$mask);
+		$self->{main}->incoming($self,Artemis::Message->new(user=>$nick,text=>$longarg,to=>$replyto,via=>$args[0],token=>"irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$mask,nick=>$self->{nick}));
 	}elsif($command eq "376" or $command eq "422"){
 		$self->{onconnect}->($self);
 	}elsif($command eq "NOTICE"){
