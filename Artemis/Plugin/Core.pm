@@ -7,8 +7,9 @@ sub new{
 test => sub{return "Test passed!"},
 say => sub{return shift},
 quit => sub{return if pop->level<=500;pop->disconnect()},
+load => sub{my($mod,$conn)=@_;return if pop->level<=500;return "Success" if $conn->{main}->load($conn,$mod);return "Failure"},
 quote => sub{return if pop->level<=500;my($ind,$raw)=split(/ +/,shift,2);if(0+$ind){shift->{main}{connections}[$ind]->send($raw)}else{shift->send($raw)}},
-login => sub{my($login,$pass)=split(/ +/,shift,2);my $conn = shift;return "UTTER FAILURE" if $conn->{main}{pass}{$login} ne sha1_base64($pass);return "You are now logged in as ".($conn->{main}{logins}{pop->token}=$login)},
+login => sub{my($login,$pass)=split(/ +/,shift,2);my $conn = shift;return "UTTER FAILURE" if $conn->{main}{pass}{$login} ne sha1_base64($pass);return "You are now logged in as ".($conn->{main}{logins}{lc pop->token}=$login)},
 mkuser => \&mkuser,
 rmuser => sub{;},
 'eval' => sub{return unless pop->level>500;return eval(shift) || $@;},
@@ -30,10 +31,11 @@ sub mkuser{
 sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
-	return if time - $self->{main}{floodprot}{$token} < 4;
-	$self->{main}{floodprot}{$token}=time;
-	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack/i;
 	return unless $msg->pm && $msg->text =~ /^([^ ]+) ?(.*?)$/;
-	$conn->message($msg->to,$self->{commands}{$1}($2,$conn,$msg)) if ref($self->{commands}{$1}) eq "CODE";
+	return if time - $self->{main}{floodprot}{$msg->token} < 4;
+	$self->{main}{floodprot}{$msg->token}=time;
+	my($cmd,$args)=($1,$2);
+	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack/i;
+	$conn->message($msg->to,$self->{commands}{$cmd}($args,$conn,$msg)) if ref($self->{commands}{$1}) eq "CODE";
 }
 1;

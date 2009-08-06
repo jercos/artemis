@@ -49,9 +49,9 @@ sub Process{
 sub load{
 	my $self = shift;
 	my $conn = shift;
-	my $name = shift;
-	my $module = "Artemis::Plugin::".$name;
-	my $file = "./Artemis/Plugin/$name.pm";
+	my $name = lc shift;
+	my $module = "Artemis::Plugin::\u$name";
+	my $file = "./Artemis/Plugin/\u$name.pm";
 	my $spawn = shift;
 	unless(do $file){
 		print STDERR "failed to load $module\n$@\n";
@@ -75,7 +75,7 @@ sub incoming{
 	my $conn = shift;
 	my $msg = shift;
 	if(exists($self->{logins}{lc $msg->token}) && $msg->token ne "null://"){
-		my $username = $self->{logins}{$msg->token};
+		my $username = $self->{logins}{lc $msg->token};
 		$msg->auth($username,$self->{users}{$username});
 	}
 	for my $module(values %{$conn->{modules}}){
