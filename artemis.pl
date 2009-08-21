@@ -34,7 +34,7 @@ close USERDB;
 # pass may well serve the bot owner, but since this is publicly accessable, I think I'll leave it off :P
 $art->connect(
 	{type=>"term"},
-	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test","#bots","#boats"]},
+	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test","#bots","#boats","#xkcd-religion"]},
 #	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test"]},
 #	{type=>"jabber",host=>"jercos.dyndns.org",nick=>"artemis",pass=>"noonebutme"},
 );

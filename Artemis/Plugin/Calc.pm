@@ -49,6 +49,7 @@ sub input{
 'pi' => pi,
 'e' => exp(1),
 'i' => sub{push@{$_[0]},sqrt(-1)},
+'porn' => 5318008,
 # section 3: unary ops
 'sqrt' => sub{$_[0][-1] = sqrt($_[0][-1])},
 'sin' => sub{$_[0][-1] = sin($_[0][-1])},
