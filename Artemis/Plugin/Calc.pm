@@ -16,7 +16,8 @@ sub input{
 		for(@ops){
 			push @stack,oct($_) and next if /^0[0-7]+?$/;
 			push @stack,oct($_) and next if /^0b[01]+?$/;
-			push @stack,oct($_) and next if /^0x?[0-9a-f]+?$/;
+			push @stack,oct($_) and next if /^0x?[0-9a-f]+?$/i;
+			if(my@x=/^(\d+)d(\d+)$/){push@stack,$x[1]?int(rand$x[1])+1:0 while$x[0]--}
 			push @stack,0+$_ and next if /^-?\d+(\.\d+)?$/;
 			$_=lc$_;
 			if(exists($op{$_})){
