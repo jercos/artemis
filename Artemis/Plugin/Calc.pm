@@ -1,28 +1,41 @@
 package Artemis::Plugin::Calc;
 use Math::Complex;
 use Math::Trig;
+use Inline::Python qw(py_eval py_bind_class py_call_function);
 sub new{
 	my $class =shift;
+	{
+		local $/;
+		open(my $x,"<","Artemis/Plugin/EnhancedCalc.py") or die 'Cant find my precious python file.';
+		my $y = <$x>;
+		py_eval($y);
+		close $x;
+	}
 	return bless([],$class);
 };
 
 sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
-	if($msg->text =~ /^calc (.*)$/){
+	if($msg->text =~ /^(e?)calc (.*)$/){
 		my @stack = ();
 		my $memory = 0;
-		my @ops = split ' ',$1;
+		print "$parser\n";
+		undef $@;
+		my @ops = ($1 eq "e")?eval{@{py_call_function("__main__","parse",$2)}}:split ' ',$2;
+		print "\n",join(",",@ops),"\n";
+		return $conn->message($msg->to,"PyEval Error: $@") if $@;
 		for(@ops){
 			push @stack,oct($_) and next if /^0[0-7]+?$/;
 			push @stack,oct($_) and next if /^0b[01]+?$/;
 			push @stack,oct($_) and next if /^0x?[0-9a-f]+?$/i;
 			if(my@x=/^(\d+)d(\d+)$/){push@stack,$x[1]?int(rand$x[1])+1:0 while$x[0]--}
-			push @stack,0+$_ and next if /^-?\d+(\.\d+)?$/;
+			push @stack,0+$_ and next if /^[-+]?\d+(\.\d+)?$/;
 			$_=lc$_;
 			if(exists($op{$_})){
 				undef $@;
 				eval{$op{$_}->(\@stack,\$memory)} if ref $op{$_} eq "CODE";
+				return $conn->message($msg->to,"Error: Stack Underflow.") if $@ =~ /^Modification of non-creatable array value/;
 				return $conn->message($msg->to,"Error: $@") if $@;
 				push @stack, $op{$_} if ref $op{$_} eq "";
 			}
