@@ -16,15 +16,9 @@ sub new{
 			my $self = shift;
 			$self->send("JOIN :$_") for @{$self->{autojoin}};
 			$self->send("MODE ".($self->{nick})." +B");
-			$self->{main}->load($self,"Core");
 		},
 		sock=>undef,		#this holds an IO::Socket::INET object, or an IO::Handle, or similar. anything that works inside readline()
 		autojoin=>[],		#what channels do we want to join automatically?
-		modules=>{},		#this will contain Artemis::Plugin::* objects allowed to work with this connection.
-					#preferably, each item will be copied from the master list of objects, but optionally one could call the constructor once for each connection
-					#this would allow, for exmaple, a factoid module to keep seperate databases between different networks.
-					#the format is Perl module name => object, e.g., $foo = Artemis::Plguin::fo->new();$self->{modules}{"Artemis::Plugin::foo"}=$foo
-					#this prevents loading modules twice, and allows for easy unloading.
 		@_,			#and finally, suck up any key=>value pairs passed in, and overwrite default values.
 	};
 	bless($self,$class);

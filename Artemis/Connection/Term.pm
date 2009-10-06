@@ -7,11 +7,9 @@ sub new{
 		sock=>undef,
 		level=>65536,
 		nick=>"artemis",
-		modules=>{},
 		@_
 	};
 	bless($self,$class);
-	$self->{main}->load($self,"Core");
 	return $self;
 }
 

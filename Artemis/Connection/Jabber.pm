@@ -8,14 +8,12 @@ sub new{
 		user=>"artemis",
 		host=>"jercos.dyndns.org",
 		pass=>"",
-		modules=>{},
 		autoconnect=>1,
 		resource=>"artemis2",
 		presence=>time,
 		@_
 	};
 	bless($self,$class);
-	$self->{main}->load($self,"Core");
 	$self->connect() if $self->{autoconnect};
 	return $self;
 }

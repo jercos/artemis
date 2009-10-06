@@ -8,6 +8,7 @@ $main::DEBUG = 1;
 # TODO: use this to allow running changes to Artemis.pm
 # note that cloning an Artemis object like this and calling Process on both may have unforseen consequences.
 my $art = Artemis->new;
+$art->load("core");
 # A little preperation. if this gets closed, we want to save the user db first.
 # Obviously, this will need to be something more robust. 
 # TODO: make this not suck :P

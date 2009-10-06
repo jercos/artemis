@@ -1,5 +1,4 @@
 package Artemis;
-use Module::PluginFinder;
 use Artemis::Message;
 sub new{
 	# a simple constructor...
@@ -48,24 +47,14 @@ sub Process{
 #this should load a module by name if it's not already loaded, 
 sub load{
 	my $self = shift;
-	my $conn = shift;
 	my $name = lc shift;
 	my $module = "Artemis::Plugin::\u$name";
 	my $file = "./Artemis/Plugin/\u$name.pm";
-	my $spawn = shift;
 	unless(do $file){
 		print STDERR "failed to load $module\n$@\n";
 		return 0;
 	}
-	if(exists($self->{modules}{$module})){
-		if($spawn){
-			$conn->{modules}{$module} = $module->new();
-		}else{
-			$conn->{modules}{$module} = $self->{modules}{$module};
-		}
-	}else{
-		$self->{modules}{$module} = $conn->{modules}{$module} = $module->new();
-	}
+	$self->{modules}{$module} = $module->new();
 	return 1;
 }
 # incoming will handle all traffic from Artemis::Connection modules to Artemis::Plugin modules.
@@ -78,7 +67,7 @@ sub incoming{
 		my $username = $self->{logins}{lc $msg->token};
 		$msg->auth($username,$self->{users}{$username});
 	}
-	for my $module(values %{$conn->{modules}}){
+	for my $module(values %{$self->{modules}}){
 		$module->input($conn, $msg);
 	}
 }
