@@ -24,7 +24,7 @@ sub connect{
 	my @result = $self->{sock}->AuthSend(username=>$self->{user},password=>$self->{pass},resource=>$self->{resource});
 	$self->{sock}->PresenceSend();
 	$self->{sock}->SetCallBacks(message => sub{$self->jabber(@_)});
-	print "Jabber connection returned '".join("','",@result)."'\n";
+	print STDERR "Jabber connection returned '".join("','",@result)."'\n";
 }
 
 sub disconnect{
@@ -47,7 +47,7 @@ sub message{
 	my($replyto,$msg)=@_;
 	#$self->{sock}->Send($replyto->Reply($msg));
 	$self->{sock}->MessageSend(to=>$replyto,body=>$msg);
-	print "jabber://$replyto <- $msg\n"
+	print STDERR "jabber://$replyto <- $msg\n"
 }
 
 sub jabber{
@@ -60,7 +60,7 @@ sub jabber{
 	my $nick = $1;
 	$input =~ s/[\r\n]//g;
 	return unless $input;
-	print "jabber://$from -> $input\n";
+	print STDERR "jabber://$from -> $input\n";
 	$self->{main}->incoming($self,$nick,$input,1,$from,"jabber://".$self->{user}.'@'.$self->{host}."/".$self->{resource}."#$from");
 }
 1;

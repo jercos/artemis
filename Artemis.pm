@@ -9,7 +9,7 @@ sub new{
 		facts=>undef,
 		modules=>{},
 		users=>{root=>65536},
-		logins=>{"term://"=>"root"},
+		logins=>{},
 		pass=>{},
 		@_
 		};
@@ -18,23 +18,16 @@ sub new{
 }
 sub connect{
 	my $self = shift;
-	# a fairly generic Module::PluginFinder setup, from what I can tell...
-	my $finder = Module::PluginFinder->new(
-		search_path => 'Artemis::Connection',
-		filter => sub {
-			my ( $module, $searchkey ) = @_;
-			$module->can( $searchkey );
-		},
-	);
 	# so that multiple things can be connected to at once. magical, no?
 	for my $item(@_){
 		# called like $art->connect({...}); not $art->connect(...);
 		next unless ref($item) eq "HASH";
-		eval{
-			my $conn = $finder->construct($item->{type},%$item,main=>$self);
-			push @{$self->{connections}}, $conn if $conn;
-		};
-		warn $@ if $@;
+		my $type = lc $item->{type};
+		$type="\u$type";
+		next unless do "./Artemis/Connection/$type.pm";
+		$type="Artemis::Connection::$type";
+		my $conn = $type->new(%$item,main=>$self);
+		push @{$self->{connections}}, $conn if $conn;
 	}
 }
 # simply call $obj->Process() for each connection.

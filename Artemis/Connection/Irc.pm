@@ -136,7 +136,10 @@ sub irc{
 			$self->{nick} = $longarg;
 			printf STDERR "%02d:%02d:%02d changed nicks to %s\n",(localtime)[2,1,0], $longarg;
 		}else{
-			printf STDERR "%02d:%02d:%02d * %s is now known as %s\n",(localtime)[2,1,0],$nick,$longarg;
+			my $frommask	=lc "irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$mask;
+			my $tomask	=lc "irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$longarg."!".$user.'@'.$host;
+			return unless exists $self->{main}{logins}{$frommask};
+			$self->{main}{logins}{$tomask} = delete($self->{main}{logins}{$frommask});
 		}
 	}else{
 		printf STDERR "%02d:%02d:%02d  ->%s\n",(localtime)[2,1,0],$data;
