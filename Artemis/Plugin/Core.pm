@@ -5,14 +5,15 @@ sub new{
 	my $self = {
 		commands =>{
 test => sub{return "Test passed!"},
-say => sub{return shift},
+say => sub{return shift if defined pop->level},
 quit => sub{return if pop->level<=500;pop->disconnect()},
 load => sub{return if pop->level<=500;return "Success" if pop->{main}->load(pop);return "Failure"},
 quote => sub{return if pop->level<=500;my($ind,$raw)=split(/ +/,shift,2);if(0+$ind eq $ind){shift->{main}{connections}[$ind]->send($raw)}else{shift->send($ind." ".$raw)}},
 login => sub{my($login,$pass)=split(/ +/,shift,2);my $conn = shift;return "UTTER FAILURE" if $conn->{main}{pass}{$login} ne sha1_base64($pass);return "You are now logged in as ".($conn->{main}{logins}{lc pop->token}=$login)},
 mkuser => \&mkuser,
 rmuser => sub{;},
-'eval' => sub{return unless pop->level>500;return eval(shift) || $@;},
+passwd => \&passwd,
+'eval' => sub{return unless $_[2]->level>500;return eval($_[0]) || $@;},
 whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in":"not logged in").", and as such your level is ".$msg->level},
 gettoken => sub{my $msg = pop;return $msg->user.", your token is '".$msg->token."'"},
 time => sub{return scalar localtime()},
@@ -27,6 +28,11 @@ sub mkuser{
 	return "You must spawn more overlords." unless $msg->level > $conn->{main}{users}{$login};
 	$conn->{main}{pass}{$login}=sha1_base64($pass);
 	$conn->{main}{users}{$login}=($msg->level < $level)?$msg->level-1:$level;
+}
+sub passwd{
+	my($input,$conn,$msg)=@_;
+	return "You are not logged in, sorry." unless defined $msg->level;
+	return("Hash for ".$msg->user." set to ".($conn->{main}{pass}{$msg->user}=sha1_base64($input)));
 }
 sub input{
 	my $self = shift;
