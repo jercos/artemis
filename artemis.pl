@@ -7,6 +7,7 @@ $main::DEBUG = 1;
 # dereferencing an artemis object would in theory clone the running bot with filehandles intact.
 # TODO: use this to allow running changes to Artemis.pm
 # note that cloning an Artemis object like this and calling Process on both may have unforseen consequences.
+open(STDERR,">>","/home/jercos/artemis.log");
 my $art = Artemis->new;
 $art->load("core");
 # A little preperation. if this gets closed, we want to save the user db first.
@@ -36,6 +37,7 @@ close USERDB;
 $art->connect(
 	{type=>"term"},
 	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test","#bots","#boats","#xkcd-religion"]},
+	{type=>"irc",host=>"irc.cluenet.org",nick=>"Artemis",autojoin=>["#artemis","#bots","#clueirc"]},
 #	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test"]},
 #	{type=>"jabber",host=>"jercos.dyndns.org",nick=>"artemis",pass=>"noonebutme"},
 );

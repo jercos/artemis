@@ -62,9 +62,8 @@ sub send{
 	for(@_){
 		$_ = "$_";
 		s/[\r\n]/\\n/g;
-		printf STDERR "%02d:%02d:%02d  <-%s" ,(localtime)[2,1,0] ,$_;
+		printf STDERR "%02d:%02d:%02d  <-%s\n" ,(localtime)[2,1,0] ,$_;
 		print {$self->{sock}} "$_\n";
-		print "\n";
 	}
 }
 #data headed outward to the network. this defines the scheme for extra data for Artemis::outgoing
@@ -119,7 +118,7 @@ sub irc{
 		}else{
 			printf STDERR "%02d:%02d:%02d <%s:%s> %s\n",(localtime)[2,1,0],$nick,$args[0],$longarg;
 		}
-		my $pm = $args[0] eq $self->{nick};
+		my $pm = lc($args[0]) eq lc($self->{nick});
 		my $replyto = $pm ? $nick : $args[0];
 		$self->{main}->incoming($self,Artemis::Message->new(user=>$nick,text=>$longarg,to=>$replyto,via=>$args[0],token=>"irc://".$self->{nick}."@".$self->{host}.":".$self->{port}."/#".$mask,nick=>$self->{nick}));
 	}elsif($command eq "376" or $command eq "422"){

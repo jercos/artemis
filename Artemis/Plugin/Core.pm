@@ -7,19 +7,31 @@ sub new{
 test => sub{return "Test passed!"},
 say => sub{return shift if defined pop->level},
 quit => sub{return if pop->level<=500;pop->disconnect()},
-load => sub{return if pop->level<=500;return "Success" if pop->{main}->load(pop);return "Failure"},
-quote => sub{return if pop->level<=500;my($ind,$raw)=split(/ +/,shift,2);if(0+$ind eq $ind){shift->{main}{connections}[$ind]->send($raw)}else{shift->send($ind." ".$raw)}},
-login => sub{my($login,$pass)=split(/ +/,shift,2);my $conn = shift;return "UTTER FAILURE" if $conn->{main}{pass}{$login} ne sha1_base64($pass);return "You are now logged in as ".($conn->{main}{logins}{lc pop->token}=$login)},
+load => sub{return if pop->level<=500;return "Success" if pop->{main}->load(shift);return "Failure"},
+quote => sub{return if pop->level<=500;my($ind,$raw)=split(/ +/,shift,2);if(0+$ind eq $ind){pop->{main}{connections}[$ind]->send($raw)}else{shift->send($ind." ".$raw)}},
+login => sub{my($a,$s,$c,$m)=@_;my($login,$pass)=split(/ +/,$a,2);return "UTTER FAILURE" if $c->{main}{pass}{$login} ne sha1_base64($pass);return "You are now logged in as ".($c->{main}{logins}{lc $m->token}=$login)},
 mkuser => \&mkuser,
 rmuser => sub{;},
 passwd => \&passwd,
-'eval' => sub{return unless $_[2]->level>500;return eval($_[0]) || $@;},
+'eval' => sub{my($a,$s,$c,$m)=@_;return unless $m->level>500;return eval($a) || $@;},
 whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in":"not logged in").", and as such your level is ".$msg->level},
 gettoken => sub{my $msg = pop;return $msg->user.", your token is '".$msg->token."'"},
 time => sub{return scalar localtime()},
-		}
+timer => sub{my($a,$s,$c,$m)=@_;$s->{timers}{time()+$a}=[$c,$m];return "Timer added."},
+		},
+		timers => {},
 	};
 	return bless($self,$class);
+}
+sub Process{
+	my $self = shift;
+	for my $timer (keys %{$self->{timers}}){
+		my($conn,$msg) = @{$self->{timers}{$timer}};
+		if($timer <= time){
+			$conn->message($msg->to,$msg->user.", your timer has expired.");
+			delete($self->{timers}{$timer});
+		}
+	}
 }
 sub mkuser{
 	my($input,$conn,$msg)=@_;
@@ -42,6 +54,6 @@ sub input{
 	$self->{main}{floodprot}{$msg->token}=time;
 	my($cmd,$args)=($1,$2);
 	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack/i;
-	$conn->message($msg->to,$self->{commands}{$cmd}($args,$conn,$msg)) if ref($self->{commands}{$1}) eq "CODE";
+	$conn->message($msg->to,$self->{commands}{$cmd}($args,$self,$conn,$msg)) if ref($self->{commands}{$1}) eq "CODE";
 }
 1;

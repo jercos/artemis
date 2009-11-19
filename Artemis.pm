@@ -36,6 +36,11 @@ sub Process{
 	for my $conn (@{$self->{connections}}){
 		$conn->Process(0);
 	}
+	for my $modname (keys %{$self->{modules}}){
+		my $module = $self->{modules}{$modname};
+		next unless $module->can("Process");
+		$module->Process(0);
+	}
 }
 #this should load a module by name if it's not already loaded, 
 sub load{
