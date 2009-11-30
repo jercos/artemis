@@ -20,10 +20,8 @@ sub input{
 	if($msg->text =~ /^(e?)calc (.*)$/){
 		my @stack = ();
 		my $memory = 0;
-		print "$parser\n";
 		undef $@;
 		my @ops = ($1 eq "e")?eval{@{py_call_function("__main__","parse",$2)}}:split ' ',$2;
-		print "\n",join(",",@ops),"\n";
 		return $conn->message($msg->to,"PyEval Error: $@") if $@;
 		for(@ops){
 			push @stack,oct($_) and next if /^0[0-7]+?$/;
