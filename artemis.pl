@@ -37,7 +37,7 @@ close USERDB;
 $art->connect(
 	{type=>"term"},
 	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test","#bots","#boats","#xkcd-religion"]},
-	{type=>"irc",host=>"irc.cluenet.org",nick=>"Artemis",autojoin=>["#artemis","#bots","#clueirc"]},
+#	{type=>"irc",host=>"irc.cluenet.org",nick=>"Arty",autojoin=>["#artemis","#bots","#clueirc"]},
 #	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test"]},
 #	{type=>"jabber",host=>"jercos.dyndns.org",nick=>"artemis",pass=>"noonebutme"},
 );

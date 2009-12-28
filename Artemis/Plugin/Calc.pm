@@ -17,8 +17,11 @@ sub new{
 sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
+	return if time - $conn->{main}{floodprot}{$msg->token} < 4;
+	$conn->{main}{floodprot}{$msg->token}=time;
 	if($msg->text =~ /^(e?)calc (.*)$/){
 		my @stack = ();
+		my @stackstack = ();
 		my $memory = 0;
 		undef $@;
 		my @ops = ($1 eq "e")?eval{@{py_call_function("__main__","parse",$2)}}:split ' ',$2;
@@ -36,6 +39,12 @@ sub input{
 				return $conn->message($msg->to,"Error: Stack Underflow.") if $@ =~ /^Modification of non-creatable array value/;
 				return $conn->message($msg->to,"Error: $@") if $@;
 				push @stack, $op{$_} if ref $op{$_} eq "";
+			}elsif($_ eq "("){
+				push @stackstack, [@stack];
+			}elsif($_ eq ")"){
+				my $retval = pop @stack;
+				@stack = @{pop @stackstack};
+				push @stack, $retval;
 			}
 		}
 		$conn->message($msg->to,"Returned ".join(",",@stack));
@@ -87,5 +96,6 @@ sub input{
 'r^' => sub{push@{$_[0]},shift@{$_[0]}},
 'rv' => sub{unshift@{$_[0]},pop@{$_[0]}},
 'sum' => sub{while(@{$_[0]}>1){$_[0][0]+=pop@{$_[0]}}},
+'cls' => sub{@{$_[0]}=()},
 );
 1;

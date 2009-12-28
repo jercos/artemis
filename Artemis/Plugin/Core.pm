@@ -34,7 +34,7 @@ sub Process{
 	}
 }
 sub mkuser{
-	my($input,$conn,$msg)=@_;
+	my($input,$self,$conn,$msg)=@_;
 	return "You must construct additional pylons." unless defined $msg->level;
 	my($login,$level,$pass)=split(/ +/,$input,3);
 	return "You must spawn more overlords." unless $msg->level > $conn->{main}{users}{$login};
@@ -42,18 +42,18 @@ sub mkuser{
 	$conn->{main}{users}{$login}=($msg->level < $level)?$msg->level-1:$level;
 }
 sub passwd{
-	my($input,$conn,$msg)=@_;
+	my($input,$self,$conn,$msg)=@_;
 	return "You are not logged in, sorry." unless defined $msg->level;
 	return("Hash for ".$msg->user." set to ".($conn->{main}{pass}{$msg->user}=sha1_base64($input)));
 }
 sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
+	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack$/i;
 	return unless $msg->pm && $msg->text =~ /^([^ ]+) ?(.*?)$/;
 	return if time - $self->{main}{floodprot}{$msg->token} < 4;
 	$self->{main}{floodprot}{$msg->token}=time;
 	my($cmd,$args)=($1,$2);
-	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack/i;
 	$conn->message($msg->to,$self->{commands}{$cmd}($args,$self,$conn,$msg)) if ref($self->{commands}{$1}) eq "CODE";
 }
 1;

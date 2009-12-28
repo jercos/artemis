@@ -29,7 +29,7 @@ sub to{
 	return $self->{to};
 }
 sub via{
-	return shift->{at};
+	return shift->{via};
 }
 sub user{
 	my $self = shift;
