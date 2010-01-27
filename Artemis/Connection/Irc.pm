@@ -127,7 +127,7 @@ sub irc{
 		printf STDERR "%02d:%02d:%02d -%s- %s\n",(localtime)[2,1,0],$nick,$longarg;
 	}elsif($command eq "JOIN"){
 		printf STDERR "%02d:%02d:%02d -!- %s [%s] has joined %s\n",(localtime)[2,1,0],$nick,$mask,$longarg;
-		$self->send("MODE $longarg +v $nick");
+#		$self->send("MODE $longarg +v $nick");
 	}elsif($command eq "372" || $command eq "375"){
 		push @{$self->{MOTD}}, sprintf "%02d:%02d:%02d %s\n",(localtime)[2,1,0],$longarg;
 	}elsif($command eq "NICK"){

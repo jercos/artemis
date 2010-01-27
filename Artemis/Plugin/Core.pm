@@ -17,7 +17,7 @@ passwd => \&passwd,
 whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in":"not logged in").", and as such your level is ".$msg->level},
 gettoken => sub{my $msg = pop;return $msg->user.", your token is '".$msg->token."'"},
 time => sub{return scalar localtime()},
-timer => sub{my($a,$s,$c,$m)=@_;$s->{timers}{time()+$a}=[$c,$m];return "Timer added."},
+timer => sub{my($a,$s,$c,$m)=@_;return "Try again, with less fail this time." unless $a=~/^(\d+[hms]?)(?: *(.{0,30}))$/;$s->{timers}{time()+timetosecs($1)}=[$c,$m,$2];return "Timer added."},
 		},
 		timers => {},
 	};
@@ -26,12 +26,18 @@ timer => sub{my($a,$s,$c,$m)=@_;$s->{timers}{time()+$a}=[$c,$m];return "Timer ad
 sub Process{
 	my $self = shift;
 	for my $timer (keys %{$self->{timers}}){
-		my($conn,$msg) = @{$self->{timers}{$timer}};
+		my($conn,$msg,$name) = @{$self->{timers}{$timer}};
 		if($timer <= time){
-			$conn->message($msg->to,$msg->user.", your timer has expired.");
+			$conn->message($msg->to,$msg->user.", your timer".($name?", '$name' ":" ")."has expired.");
 			delete($self->{timers}{$timer});
 		}
 	}
+}
+sub timetosecs{
+	my $time = shift;
+	$time =~ s/^(.*)([hm])$/($2 eq "h"?60*60:60)*$1/e;
+	$time =~ y/0-9//dc;
+	return $time;
 }
 sub mkuser{
 	my($input,$self,$conn,$msg)=@_;
@@ -50,6 +56,7 @@ sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
 	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack$/i;
+	$conn->message($msg->to,"Hello, ".$msg->user."!") if $msg->text =~ /^(hello|hi|howdy)[, ]+art(y|emis)?/i;
 	return unless $msg->pm && $msg->text =~ /^([^ ]+) ?(.*?)$/;
 	return if time - $self->{main}{floodprot}{$msg->token} < 4;
 	$self->{main}{floodprot}{$msg->token}=time;
