@@ -1,5 +1,6 @@
 package Artemis::Plugin::Core;
 use Digest::SHA qw(sha1_base64);
+use Time::ParseDate;
 sub new{
 	my $class = shift;
 	my $self = {
@@ -14,10 +15,12 @@ mkuser => \&mkuser,
 rmuser => sub{;},
 passwd => \&passwd,
 'eval' => sub{my($a,$s,$c,$m)=@_;return unless $m->level>500;return eval($a) || $@;},
-whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in":"not logged in").", and as such your level is ".$msg->level},
+whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in, at level ".$msg->level.".":"not logged in.")},
 gettoken => sub{my $msg = pop;return $msg->user.", your token is '".$msg->token."'"},
 time => sub{return scalar localtime()},
-timer => sub{my($a,$s,$c,$m)=@_;return "Try again, with less fail this time." unless $a=~/^(\d+[hms]?)(?: *(.{0,30}))$/;$s->{timers}{time()+timetosecs($1)}=[$c,$m,$2];return "Timer added."},
+timer => sub{my($a,$s,$c,$m)=@_;return "Try again, with less fail this time." unless $a=~/^(\d+[hms]?)(?: *(.{0,60}))$/;$s->{timers}{time()+timetosecs($1)}=[$c,$m,$2];return "Timer added."},
+beep => sub{my($a,$s,$c,$m)=@_;my$t;return "Fail." unless $a=~/^(.*) {2,}(.*)$/ && ($t=parsedate($1));$s->{timers}{$t}=[$c,$m,$2];return "Set a timer named \"$2\" for ".localtime($t)},
+beepcos => sub{my($a,$s,$c,$m)=@_;return unless $m->level>512;return "Beeping Jeremy, PID of ".open(BEEP,"-|","/home/jercos/bin/beepcos")},
 		},
 		timers => {},
 	};
@@ -29,6 +32,7 @@ sub Process{
 		my($conn,$msg,$name) = @{$self->{timers}{$timer}};
 		if($timer <= time){
 			$conn->message($msg->to,$msg->user.", your timer".($name?", '$name' ":" ")."has expired.");
+			open(BEEP,"-|","/home/jercos/bin/beepcos") if $msg->user eq "jercos";
 			delete($self->{timers}{$timer});
 		}
 	}
@@ -55,6 +59,7 @@ sub passwd{
 sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
+	$conn->send("KICK ".$msg->via." ".$msg->user." :You down with Arty? YEAH YOU BEEP ME.") if $msg->text =~ /\x07/ and "Artemis::Connection::Unreal" eq ref $conn;
 	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack$/i;
 	$conn->message($msg->to,"Hello, ".$msg->user."!") if $msg->text =~ /^(hello|hi|howdy)[, ]+art(y|emis)?/i;
 	return unless $msg->pm && $msg->text =~ /^([^ ]+) ?(.*?)$/;

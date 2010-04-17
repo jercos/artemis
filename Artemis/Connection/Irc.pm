@@ -60,10 +60,10 @@ sub send{
 	my $self = shift;
 	return 0 unless defined $self->{sock};
 	for(@_){
-		$_ = "$_";
-		s/[\r\n]/\\n/g;
-		printf STDERR "%02d:%02d:%02d  <-%s\n" ,(localtime)[2,1,0] ,$_;
-		print {$self->{sock}} "$_\n";
+		my $x = "$_";
+		$x =~ s/[\r\n]//g;
+		printf STDERR "%02d:%02d:%02d  <-%s\n" ,(localtime)[2,1,0] ,$x;
+		print {$self->{sock}} "$x\n";
 	}
 }
 #data headed outward to the network. this defines the scheme for extra data for Artemis::outgoing
