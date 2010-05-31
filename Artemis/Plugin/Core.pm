@@ -14,7 +14,7 @@ login => sub{my($a,$s,$c,$m)=@_;my($login,$pass)=split(/ +/,$a,2);return "UTTER 
 mkuser => \&mkuser,
 rmuser => sub{;},
 passwd => \&passwd,
-'eval' => sub{my($a,$s,$c,$m)=@_;return unless $m->level>500;return eval($a) || $@;},
+'eval' => sub{my($a,$s,$c,$m)=@_;return unless $m->level>500;return eval{local$SIG{INT}=sub{die "Caught Ctrl-C\n"};my$r=eval($a)||$@}},
 whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in, at level ".$msg->level.".":"not logged in.")},
 gettoken => sub{my $msg = pop;return $msg->user.", your token is '".$msg->token."'"},
 time => sub{return scalar localtime()},
@@ -59,7 +59,7 @@ sub passwd{
 sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
-	$conn->send("KICK ".$msg->via." ".$msg->user." :You down with Arty? YEAH YOU BEEP ME.") if $msg->text =~ /\x07/ and "Artemis::Connection::Unreal" eq ref $conn;
+	$conn->send("KICK ".$msg->via." ".$msg->user." :Never gonna give you up, never gonna send you BELs, never gonna run around and desert you...") if $msg->text =~ /\x07/ and "Artemis::Connection::Unreal" eq ref $conn;
 	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack$/i;
 	$conn->message($msg->to,"Hello, ".$msg->user."!") if $msg->text =~ /^(hello|hi|howdy)[, ]+art(y|emis)?/i;
 	return unless $msg->pm && $msg->text =~ /^([^ ]+) ?(.*?)$/;

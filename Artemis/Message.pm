@@ -13,7 +13,7 @@ sub new{
 		nick=>"artemis",	# her nickname in the context of the message.
 		@_
 	};
-	if($self->{text}=~s/^\)|^($self->{nick})[, :]+// || $self->{via} eq $self->{nick}){
+	if($self->{text}=~s/^\)|^($self->{nick})[, :]+//i || lc($self->{via}) eq lc($self->{nick})){
 		$self->{pm}=1;
 	}
 	return bless($self, $class);

@@ -39,6 +39,7 @@ sub connect{
 	);
 	#add our new socket to the select loop
 	select('','','',0.1) while eof($self->{sock});
+	$self->send("PASS :".$self->{serverpass}) if $self->{serverpass};
 	$self->send("USER ".$self->{user}." - - :".$self->{realname},"NICK ".$self->{nick});
 }
 #we're done, y'all hear?
@@ -50,7 +51,7 @@ sub disconnect{
 #call this every once in a while, a second or two is suitable, but this should return in under a quarter of a second unless the socket was opened blocking.
 sub Process{
 	my $self = shift;
-	if(defined(my $line = readline($self->{sock}) )){
+	while(defined(my $line = readline($self->{sock}) )){
 		$line .= readline($self->{sock}) while !chomp $line;
 		$self->irc($line);
 	}
@@ -97,7 +98,6 @@ sub irc{
 			if($1 eq "PING"){
 				$self->send("NOTICE $nick :\x01$1 $longarg\x01");
 			}elsif($1 eq "TIME"){
-				print "Got a TIME.\n";
 				$self->send("NOTICE $nick :\x01$1 ".(localtime)."\x01");
 			}elsif($1 eq "VERSION"){
 				my $ver = "Artemis ";
