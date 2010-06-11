@@ -14,7 +14,7 @@ login => sub{my($a,$s,$c,$m)=@_;my($login,$pass)=split(/ +/,$a,2);return "UTTER 
 mkuser => \&mkuser,
 rmuser => sub{;},
 passwd => \&passwd,
-'eval' => sub{my($a,$s,$c,$m)=@_;return unless $m->level>500;return eval{local$SIG{INT}=sub{die "Caught Ctrl-C\n"};my$r=eval($a)||$@}},
+'eval' => sub{my($args,$s,$c,$m)=@_;return unless $m->level>500;return eval{local$SIG{INT}=sub{die "Caught Ctrl-C\n"};my$r=eval($args)||$@}},
 whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in, at level ".$msg->level.".":"not logged in.")},
 gettoken => sub{my $msg = pop;return $msg->user.", your token is '".$msg->token."'"},
 time => sub{return scalar localtime()},
