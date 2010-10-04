@@ -19,12 +19,13 @@ sub input{
 	my($conn,$msg) = @_;
 	return if time - $conn->{main}{floodprot}{$msg->token} < 4;
 	$conn->{main}{floodprot}{$msg->token}=time;
-	if($msg->text =~ /^(e?)calc (.*)$/){
+	if($msg->text =~ /^(e?)(b?)calc (.*)$/){
 		my @stack = ();
 		my @stackstack = ();
 		my $memory = 0;
+		my $binary = $2 eq "b";
 		undef $@;
-		my @ops = ($1 eq "e")?eval{@{py_call_function("__main__","parse",$2)}}:split ' ',$2;
+		my @ops = ($1 eq "e")?eval{@{py_call_function("__main__","parse",$3)}}:split ' ',$3;
 		return $conn->message($msg->to,"PyEval Error: $@") if $@;
 		for(@ops){
 			push @stack,oct($_) and next if /^0[0-7]+?$/;
@@ -32,6 +33,8 @@ sub input{
 			push @stack,oct($_) and next if /^0x?[0-9a-f]+?$/i;
 			if(my@x=/^(\d+)d(\d+)$/){$x[0]=256if$x[0]>256;push@stack,$x[1]?int(rand$x[1])+1:0 while$x[0]--}
 			push @stack,0+$_ and next if /^[-+]?\d+(\.\d+)?$/;
+			push @stack,0+$_ and next if /^[-+]?\.\d+$/;
+			push @stack,0+$_ and next if /^[-+]?\d+(\.\d+)?e\d+(\.\d+)?$/;
 			{"*"=>sub{$_[1]=shift()*pop},"+"=>sub{$_[1]+=shift()*pop},"-"=>sub{$_[1]-=shift()*pop}}->{$1}($2/100,$stack[-1]) if /([\+\-\*])(\d+(\.\d+)?)\%/;
 			$_=lc$_;
 			if(exists($op{$_})){
@@ -48,7 +51,12 @@ sub input{
 				push @stack, $retval;
 			}
 		}
-		$conn->message($msg->to,"Returned ".join(",",@stack));
+		if($binary){
+			local $_;
+			$conn->message($msg->to,"Returned ".join(",",map{sprintf("%b",$_)}@stack));
+		}else{
+			$conn->message($msg->to,"Returned ".join(",",@stack));
+		}
 	}
 };
 
@@ -84,6 +92,7 @@ sub input{
 'exp' => sub{$_[0][-1] = exp $_[0][-1]},
 'rnd' => sub{$_[0][-1] = rand $_[0][-1]},
 'int' => sub{$_[0][-1] = int $_[0][-1]},
+'!' => sub{$_[0][-1] = $_[0][-1]?0:1},
 # section 4: weird stuff
 'time' => sub{push@{$_[0]},time}, # it's not constant, but it's not an operator.
 'rand' => sub{push@{$_[0]},rand},
@@ -99,5 +108,7 @@ sub input{
 'sum' => sub{while(@{$_[0]}>1){$_[0][0]+=pop@{$_[0]}}},
 'product' => sub{while(@{$_[0]}>1){$_[0][0]*=pop@{$_[0]}}},
 'cls' => sub{@{$_[0]}=()},
+'sort>' => sub{@{$_[0]}=sort{$b<=>$a}@{$_[0]}},
+'sort<' => sub{@{$_[0]}=sort{$a<=>$b}@{$_[0]}},
 );
 1;

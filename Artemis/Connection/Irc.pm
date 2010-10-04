@@ -9,12 +9,12 @@ sub new{
 		nick=>"artemis",	#nick!user@host, Real name: realname, if you don't get it, ignore these.
 		user=>"artemis",
 		realname=>"Artemis v2.0, Jeremy Sturdivant (jercos)",
-		serverpass=>undef,	#if this is set, a PASS will be sent after USER and NICK. ignore this unless you want an IRCOP bot.
-		nickpass=>undef,	#password to send to nickserv. leave it undef to not identify to nickserv
+		serverpass=>undef,	#PASS to send
+		nickpass=>undef,	#password to send to nickserv.
 		autoconnect=>1,		#set to a false value to not immediately call $self->connect(), you'll have to call it later.
-		onconnect=>sub{	#this will get called on an "end of MOTD" command from the server, or a "no MOTD" error.
+		onconnect=>sub{	#this will get called when up and running.
 			my $self = shift;
-			$self->send("JOIN :$_") for @{$self->{autojoin}};
+			$self->send("JOIN :".join(",",@{$self->{autojoin}}));
 			$self->send("MODE ".($self->{nick})." +B");
 		},
 		sock=>undef,		#this holds an IO::Socket::INET object, or an IO::Handle, or similar. anything that works inside readline()
@@ -59,7 +59,7 @@ sub Process{
 #a raw send, for exposing to the outside world, and shortening. Never call a Connection module's send() without checking the ref() to make sure it matches the protocol you expect.
 sub send{
 	my $self = shift;
-	return 0 unless defined $self->{sock};
+	return 0 unless defined($self->{sock}) && $self->{sock}->connected();
 	for(@_){
 		my $x = "$_";
 		$x =~ s/[\r\n]//g;
@@ -70,6 +70,7 @@ sub send{
 #data headed outward to the network. this defines the scheme for extra data for Artemis::outgoing
 sub message{
 	my $self = shift;
+	return 0 unless defined($self->{sock}) && $self->{sock}->connected();
 	my($replyto, $msg) = @_;
 	for(split(/[\r\n]+/,$msg)){
 		printf STDERR "%02d:%02d:%02d <%s:%s> %s\n" ,(localtime)[2,1,0],$self->{nick} ,$replyto ,$_;
@@ -127,7 +128,6 @@ sub irc{
 		printf STDERR "%02d:%02d:%02d -%s- %s\n",(localtime)[2,1,0],$nick,$longarg;
 	}elsif($command eq "JOIN"){
 		printf STDERR "%02d:%02d:%02d -!- %s [%s] has joined %s\n",(localtime)[2,1,0],$nick,$mask,$longarg;
-#		$self->send("MODE $longarg +v $nick");
 	}elsif($command eq "372" || $command eq "375"){
 		push @{$self->{MOTD}}, sprintf "%02d:%02d:%02d %s\n",(localtime)[2,1,0],$longarg;
 	}elsif($command eq "NICK"){
