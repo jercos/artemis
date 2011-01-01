@@ -22,6 +22,7 @@ time => sub{return scalar localtime()},
 timer => sub{my($a,$s,$c,$m)=@_;return "Try again, with less fail this time." unless $a=~/^(\d+[hms]?)(?: *(.{0,60}))$/;$s->{timers}{time()+timetosecs($1)}=[$c,$m,$2];return "Timer added."},
 beep => sub{my($a,$s,$c,$m)=@_;my$t;return "Fail." unless $a=~/^(.*) {2,}(.*)$/ && ($t=parsedate($1));$s->{timers}{$t}=[$c,$m,$2];return "Set a timer named \"$2\" for ".localtime($t)},
 beepcos => sub{my($a,$s,$c,$m)=@_;return unless $m->level>512;return "Beeping Jeremy, squirrel of ".open(BEEP,"-|","/home/jercos/bin/beepcos")},
+bofh => sub{my($a,$s,$c,$m)=@_;open my $bofhh,'/home/jercos/artemis/rev/1/excuses.txt' or return "Excuses file not found.";my $bofh;rand($.)<1 and ($bofh=$_) while <$bofhh>;return $bofh}
 		},
 		timers => {},
 	};
@@ -61,7 +62,7 @@ sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
 	$conn->send("KICK ".$msg->via." ".$msg->user." :Never gonna give you up, never gonna send you BELs, never gonna run around and desert you...") if $msg->text =~ /\x07/ and "Artemis::Connection::Unreal" eq ref $conn;
-	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack$/i;
+	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack$/i && $msg->pm;
 	$conn->message($msg->to,"Hello, ".$msg->user."!") if $msg->text =~ /^(hello|hi|howdy)[, ]+art(y|emis)?/i;
 	return unless $msg->pm && $msg->text =~ /^([^ ]+) ?(.*?)$/;
 	return if time - $self->{main}{floodprot}{$msg->token} < 4;

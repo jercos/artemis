@@ -35,7 +35,7 @@ sub input{
 			push @stack,0+$_ and next if /^[-+]?\d+(\.\d+)?$/;
 			push @stack,0+$_ and next if /^[-+]?\.\d+$/;
 			push @stack,0+$_ and next if /^[-+]?\d+(\.\d+)?e\d+(\.\d+)?$/;
-			{"*"=>sub{$_[1]=shift()*pop},"+"=>sub{$_[1]+=shift()*pop},"-"=>sub{$_[1]-=shift()*pop}}->{$1}($2/100,$stack[-1]) if /([\+\-\*])(\d+(\.\d+)?)\%/;
+			{"*"=>sub{$_[1]*=shift},"+"=>sub{$_[1]+=shift()*pop},"-"=>sub{$_[1]-=shift()*pop}}->{$1}($2/100,$stack[-1]) if /([\+\-\*])(\d+(\.\d+)?)\%/;
 			$_=lc$_;
 			if(exists($op{$_})){
 				undef $@;
