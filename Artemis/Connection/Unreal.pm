@@ -100,7 +100,7 @@ sub irc{
 	my $self = shift;
 	my $data = shift;
 	$data =~ s/[\r\n]//g;
-	my($special,$main,$longarg) = split(/:/,$data,3);
+	my($special,$main,$longarg) = split(/^:| :/,$data,3);
 	return $self->send($data) if $data =~ s/^PING/PONG/;
 	return $self->{sock}->close() if $data =~ /^ERROR/;
 	my($mask,$command,@args) = split(/ +/,$main);
