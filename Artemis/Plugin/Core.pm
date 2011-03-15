@@ -1,6 +1,7 @@
 package Artemis::Plugin::Core;
 use Digest::SHA qw(sha1_base64);
 use Time::ParseDate;
+use DateTime;
 sub new{
 	my $class = shift;
 	my $self = {
@@ -18,7 +19,7 @@ passwd => \&passwd,
 'eval' => sub{my($args,$s,$c,$m)=@_;return unless $m->level>500;return eval{local$SIG{INT}=sub{die "Caught Ctrl-C\n"};my$r=eval($args)||$@}},
 whoami => sub{my $msg = pop;return $msg->user.", you are ".(defined($msg->level)?"logged in, at level ".$msg->level.".":"not logged in.")},
 gettoken => sub{my $msg = pop;return $msg->user.", your token is '".$msg->token."'"},
-time => sub{return scalar localtime()},
+time => sub{eval{my $d =DateTime->now(time_zone=>(shift||'local'))->strftime("%a %b %e %T %Y %Z")}||$@;},
 timer => sub{my($a,$s,$c,$m)=@_;return "Try again, with less fail this time." unless $a=~/^(\d+[hms]?)(?: *(.{0,60}))$/;$s->{timers}{time()+timetosecs($1)}=[$c,$m,$2];return "Timer added."},
 beep => sub{my($a,$s,$c,$m)=@_;my$t;return "Fail." unless $a=~/^(.*) {2,}(.*)$/ && ($t=parsedate($1));$s->{timers}{$t}=[$c,$m,$2];return "Set a timer named \"$2\" for ".localtime($t)},
 beepcos => sub{my($a,$s,$c,$m)=@_;return unless $m->level>512;return "Beeping Jeremy, squirrel of ".open(BEEP,"-|","/home/jercos/bin/beepcos")},
