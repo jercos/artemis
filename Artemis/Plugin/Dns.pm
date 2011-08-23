@@ -49,9 +49,16 @@ sub input{
 		{
 			my %a;
 			local $_;
-			push @{$a{$_->type}}, $_->rdatastr for @a;
+			for my $record(@a){
+				if(uc $record->type eq "SOA"){
+					push @{$a{"SOA"}}, $record->mname . " " . $record->rname . " Serial: " .$record->serial;
+				}else{
+					push @{$a{$record->type}}, $record->rdatastr;
+				}
+			}
 			$output .= " $_ ".join ",",@{$a{$_}} for keys %a;
 		}
+		$output =~ tr/\r\n\t//d;
 		$conn->message($msg->to,$msg->user.": $output");
 	}
 }

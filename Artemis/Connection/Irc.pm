@@ -72,7 +72,7 @@ sub message{
 	my $self = shift;
 	return 0 unless defined($self->{sock}) && $self->{sock}->connected();
 	my($replyto, $msg) = @_;
-	for(split(/[\r\n]+/,$msg)){
+	for(map{substr $_,0,512}split(/[\r\n]+/,$msg)){
 		printf STDERR "%02d:%02d:%02d <%s:%s> %s\n" ,(localtime)[2,1,0],$self->{nick} ,$replyto ,$_;
 		print {$self->{sock}} "PRIVMSG $replyto :$_\n";
 	}

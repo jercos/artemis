@@ -36,8 +36,8 @@ close USERDB;
 # pass may well serve the bot owner, but since this is publicly accessable, I think I'll leave it off :P
 $art->connect(
 	{type=>"term"},
-	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test","#bots","#boats","#xkcd-religion"]},
-	{type=>"irc",host=>"10.156.12.4",nick=>"artemis2",autojoin=>["#artemis","#bots","#clueirc"]},
+#	{type=>"irc",host=>"irc.foonetic.net",nick=>"artemis2",autojoin=>["#test","#bots","#boats","#xkcd-religion"]},
+#	{type=>"irc",host=>"10.156.12.4",nick=>"artemis2",autojoin=>["#artemis","#bots","#clueirc"]},
 #	{type=>"jabber",host=>"jercos.dyndns.org",nick=>"artemis",pass=>"noonebutme"},
 );
 # a simple loop over Process() is all that is strictly neccisary, however Process() does not block.

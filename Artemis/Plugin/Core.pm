@@ -2,12 +2,14 @@ package Artemis::Plugin::Core;
 use Digest::SHA qw(sha1_base64);
 use Time::ParseDate;
 use DateTime;
+use URI::Escape;
 sub new{
 	my $class = shift;
 	my $self = {
 		commands =>{
 test => sub{return "Test passed!"},
 say => sub{return shift if defined pop->level},
+google => sub{my $a=uri_escape(shift,"^a-zA-Z0-9 ");$a=~tr/ /+/;return "http://google.com/search?q=".$a},
 quit => sub{return if pop->level<=500;pop->disconnect()},
 load => sub{return if pop->level<=500;return "Success" if pop->{main}->load(shift);return "Failure"},
 quote => sub{my($a,$s,$c,$m)=@_;return if $m->level<=500;my($ind,$raw)=split(/ +/,$a,2);if(0+$ind eq $ind){$c->{main}{connections}[$ind]->send($raw)}else{$c->send($ind." ".$raw)}},
@@ -23,7 +25,8 @@ time => sub{eval{my $d =DateTime->now(time_zone=>(shift||'local'))->strftime("%a
 timer => sub{my($a,$s,$c,$m)=@_;return "Try again, with less fail this time." unless $a=~/^(\d+[hms]?)(?: *(.{0,60}))$/;$s->{timers}{time()+timetosecs($1)}=[$c,$m,$2];return "Timer added."},
 beep => sub{my($a,$s,$c,$m)=@_;my$t;return "Fail." unless $a=~/^(.*) {2,}(.*)$/ && ($t=parsedate($1));$s->{timers}{$t}=[$c,$m,$2];return "Set a timer named \"$2\" for ".localtime($t)},
 beepcos => sub{my($a,$s,$c,$m)=@_;return unless $m->level>512;return "Beeping Jeremy, squirrel of ".open(BEEP,"-|","/home/jercos/bin/beepcos")},
-bofh => sub{my($a,$s,$c,$m)=@_;open my $bofhh,'/home/jercos/artemis/rev/1/excuses.txt' or return "Excuses file not found.";my $bofh;rand($.)<1 and ($bofh=$_) while <$bofhh>;return $bofh}
+bofh => sub{my($a,$s,$c,$m)=@_;open my $bofhh,'/home/jercos/artemis/rev/1/excuses.txt' or return "Excuses file not found.";return((<$bofhh>)[$a-1])if$a>0;my $bofh;rand($.)<1 and ($bofh="$.: $_") while <$bofhh>;return $bofh},
+forge => sub{my($a,$s,$c,$m)=@_;return unless $m->level>512;my($cnum,$targ,$msg)=split(/ /,$a,3);print STDERR "Forging '$msg' at c$cnum $targ\n";$c->{main}->incoming($c->{main}{connections}[$cnum],Artemis::Message->new(level=>$m->level,user=>$m->user,text=>$msg,to=>$targ,via=>$targ,token=>$m->token,nick=>"artemis"))},
 		},
 		timers => {},
 	};
@@ -66,7 +69,7 @@ sub input{
 	$conn->message($msg->to,":D") if $msg->text =~ /^botsnack$/i && $msg->pm;
 	$conn->message($msg->to,"Hello, ".$msg->user."!") if $msg->text =~ /^(hello|hi|howdy)[, ]+art(y|emis)?/i;
 	return unless $msg->pm && $msg->text =~ /^([^ ]+) ?(.*?)$/;
-	return if time - $self->{main}{floodprot}{$msg->token} < 4;
+	return if time - $self->{main}{floodprot}{$msg->token} < 4 and $msg->level < 65535;
 	$self->{main}{floodprot}{$msg->token}=time;
 	my($cmd,$args)=($1,$2);
 	$conn->message($msg->to,$self->{commands}{$cmd}($args,$self,$conn,$msg)) if ref($self->{commands}{$1}) eq "CODE";

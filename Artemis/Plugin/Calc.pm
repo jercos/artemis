@@ -19,11 +19,13 @@ sub input{
 	my($conn,$msg) = @_;
 	return if time - $conn->{main}{floodprot}{$msg->token} < 4;
 	$conn->{main}{floodprot}{$msg->token}=time;
-	if($msg->text =~ /^(e?)(b?)calc (.*)$/){
+	if($msg->text =~ /^(e?)([bho]?)calc (.*)$/){
 		my @stack = ();
 		my @stackstack = ();
 		my $memory = 0;
 		my $binary = $2 eq "b";
+		my $octal = $2 eq "o";
+		my $hex = $2 eq "h";
 		undef $@;
 		my @ops = ($1 eq "e")?eval{@{py_call_function("__main__","parse",$3)}}:split ' ',$3;
 		return $conn->message($msg->to,"PyEval Error: $@") if $@;
@@ -41,6 +43,7 @@ sub input{
 				undef $@;
 				eval{$op{$_}->(\@stack,\$memory)} if ref $op{$_} eq "CODE";
 				return $conn->message($msg->to,"Error: Stack Underflow.") if $@ =~ /^Modification of non-creatable array value/;
+				return $conn->message($msg->to,"Error: Universe imploded (Can't divide by zero)") if $@ =~ /^Illegal division by zero/;
 				return $conn->message($msg->to,"Error: $@") if $@;
 				push @stack, $op{$_} if ref $op{$_} eq "";
 			}elsif($_ eq "("){
@@ -53,7 +56,13 @@ sub input{
 		}
 		if($binary){
 			local $_;
-			$conn->message($msg->to,"Returned ".join(",",map{sprintf("%b",$_)}@stack));
+			$conn->message($msg->to,"Returned ".join(",",map{sprintf("0b%b",$_)}@stack));
+		}elsif($octal){
+			local $_;
+			$conn->message($msg->to,"Returned ".join(",",map{sprintf("0%o",$_)}@stack));
+		}elsif($hex){
+			local $_;
+			$conn->message($msg->to,"Returned ".join(",",map{sprintf("0x%x",$_)}@stack));
 		}else{
 			$conn->message($msg->to,"Returned ".join(",",@stack));
 		}

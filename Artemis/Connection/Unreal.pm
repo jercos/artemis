@@ -137,7 +137,12 @@ sub irc{
 		my $pm = lc($args[0]) eq lc($self->{nick});
 		my $replyto = $pm ? $mask : $args[0];
 		$replyto = $mask if $args[0] =~ /^[a-z]+$/;
-		$self->{main}->incoming($self,Artemis::Message->new(user=>$mask,text=>$longarg,to=>$replyto,via=>$args[0],token=>"unreal://".$self->{name}."/".$mask,nick=>$self->{nick}));
+		my $tag = "";
+		if($mask eq "Minecraft" && $longarg =~ s/\(([^)]+)\) //){
+			$tag = "/minecraft";
+			$mask = $1;
+		}
+		$self->{main}->incoming($self,Artemis::Message->new(user=>$mask,text=>$longarg,to=>$replyto,via=>$args[0],token=>"unreal://".$self->{name}.$tag."/".$mask,nick=>$self->{nick}));
 	}elsif($command eq "NOTICE"){
 		printf STDERR "%02d:%02d:%02d -%s- %s\n",(localtime)[2,1,0],$mask,$longarg;
 	}elsif($command eq "JOIN"){

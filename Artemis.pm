@@ -26,6 +26,7 @@ sub connect{
 		$type="\u$type";
 		next unless do "./Artemis/Connection/$type.pm";
 		$type="Artemis::Connection::$type";
+		print STDERR "Added a new $type\n";
 		my $conn = $type->new(%$item,main=>$self);
 		push @{$self->{connections}}, $conn if $conn;
 	}
