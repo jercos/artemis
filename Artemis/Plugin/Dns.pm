@@ -25,15 +25,23 @@ sub input{
 	for my $host (@ARGV){
 		my $result;
 		$host.="." if $host !~ /\./;
-		$self->{dns}->nameservers($s);
+		my $dns = $self->{dns};
+		if($s eq "recurse"){
+			$dns = Net::DNS::Resolver::Recurse->new;
+		}else{
+			$dns->nameservers($s);
+		}
 		if($q){
-			$result = eval{$self->{dns}->send($host,$q)};
+			$result = eval{$dns->send($host,$q)};
 			if($@){
 				$conn->message($msg->to,$msg->user.": Failure. Is that a real DNS record type?");
 				next;
 			}
 		}else{
-			$result = $self->{dns}->send($host);
+			$result = $dns->send($host,"AAAA");
+			if($result && !scalar($result->answer)){
+				$result = $dns->send($host);
+			}
 		}
 		unless($result){
 			$conn->message($msg->to,$msg->user.": Failure. ".$self->{dns}->errorstring);

@@ -17,6 +17,7 @@ sub new{
 sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
+	return unless $msg->pm;
 	return if time - $conn->{main}{floodprot}{$msg->token} < 4;
 	$conn->{main}{floodprot}{$msg->token}=time;
 	if($msg->text =~ /^(e?)([bho]?)calc (.*)$/){
@@ -56,15 +57,15 @@ sub input{
 		}
 		if($binary){
 			local $_;
-			$conn->message($msg->to,"Returned ".join(",",map{sprintf("0b%b",$_)}@stack));
+			$conn->message($msg->to,$msg->user.": ".join(",",map{sprintf("0b%b",$_)}@stack));
 		}elsif($octal){
 			local $_;
-			$conn->message($msg->to,"Returned ".join(",",map{sprintf("0%o",$_)}@stack));
+			$conn->message($msg->to,$msg->user.": ".join(",",map{sprintf("0%o",$_)}@stack));
 		}elsif($hex){
 			local $_;
-			$conn->message($msg->to,"Returned ".join(",",map{sprintf("0x%x",$_)}@stack));
+			$conn->message($msg->to,$msg->user.": ".join(",",map{sprintf("0x%x",$_)}@stack));
 		}else{
-			$conn->message($msg->to,"Returned ".join(",",@stack));
+			$conn->message($msg->to,$msg->user.": ".join(",",@stack));
 		}
 	}
 };
@@ -82,6 +83,7 @@ sub input{
 '&' => sub{$_[0][-2] &= pop @{$_[0]}},
 '|' => sub{$_[0][-2] |= pop @{$_[0]}},
 'x' => sub{@{$_[0]}[-1,-2] = @{$_[0]}[-2,-1]}, # swap the top two.
+'<=>' => sub{$_[0][-1]=$_[0][-2]<=>pop @{$_[0]}},
 # section 2: constants
 'inf' => inf,
 'nan' => NaN,
