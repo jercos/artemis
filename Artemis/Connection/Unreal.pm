@@ -1,6 +1,7 @@
 package Artemis::Connection::Unreal;
 use IO::Socket;
 use strict;
+use POSIX qw(strftime);
 sub new{
 	my $class = shift;
 	my $self = {
@@ -164,6 +165,9 @@ sub irc{
 			printf STDERR "%02d:%02d:%02d -!- Logging out %s due to quit...\n",(localtime)[2,1,0],$mask;
 		}
 		printf STDERR "%02d:%02d:%02d -!- %s has quit (%s)\n",(localtime)[2,1,0],$mask,$longarg;
+	}elsif($command eq "TIME"){
+		my $server = $self->{name};
+		$self->send(":$server 391 $mask $server :".strftime("%A %B %d %Y -- %H:%M %z",localtime));
 	}else{
 		printf STDERR "%02d:%02d:%02d  ->%s\n",(localtime)[2,1,0],$data;
 	#	print STDERR "++++ TODO: impliment '$command'\n";

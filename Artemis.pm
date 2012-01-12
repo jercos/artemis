@@ -67,7 +67,7 @@ sub incoming{
 		$msg->auth($username,$self->{users}{$username});
 	}
 	for my $module(values %{$self->{modules}}){
-		$module->input($conn, $msg);
+		$module->input($conn, $msg) if $module->can("input");
 	}
 }
 1;

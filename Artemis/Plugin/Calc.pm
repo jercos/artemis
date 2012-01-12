@@ -1,16 +1,16 @@
 package Artemis::Plugin::Calc;
 use Math::Complex;
 use Math::Trig;
-use Inline::Python qw(py_eval py_bind_class py_call_function);
+#use Inline::Python qw(py_eval py_bind_class py_call_function);
 sub new{
 	my $class =shift;
-	{
-		local $/;
-		open(my $x,"<","Artemis/Plugin/EnhancedCalc.py") or die 'Cant find my precious python file.';
-		my $y = <$x>;
-		py_eval($y);
-		close $x;
-	}
+#	{
+#		local $/;
+#		open(my $x,"<","Artemis/Plugin/EnhancedCalc.py") or die 'Cant find my precious python file.';
+#		my $y = <$x>;
+#		py_eval($y);
+#		close $x;
+#	}
 	return bless([],$class);
 };
 
@@ -18,9 +18,9 @@ sub input{
 	my $self = shift;
 	my($conn,$msg) = @_;
 	return unless $msg->pm;
-	return if time - $conn->{main}{floodprot}{$msg->token} < 4;
+	return if time - $conn->{main}{floodprot}{$msg->token} < 2;
 	$conn->{main}{floodprot}{$msg->token}=time;
-	if($msg->text =~ /^(e?)([bho]?)calc (.*)$/){
+	if($msg->text =~ /^(p?)([bho]?)calcp? (.*)$/){
 		my @stack = ();
 		my @stackstack = ();
 		my $memory = 0;
@@ -28,17 +28,18 @@ sub input{
 		my $octal = $2 eq "o";
 		my $hex = $2 eq "h";
 		undef $@;
-		my @ops = ($1 eq "e")?eval{@{py_call_function("__main__","parse",$3)}}:split ' ',$3;
+		my @ops = ($1 eq "p")?(reverse split ' ',$3):split ' ',$3;
 		return $conn->message($msg->to,"PyEval Error: $@") if $@;
 		for(@ops){
 			push @stack,oct($_) and next if /^0[0-7]+?$/;
 			push @stack,oct($_) and next if /^0b[01]+?$/;
 			push @stack,oct($_) and next if /^0x?[0-9a-f]+?$/i;
-			if(my@x=/^(\d+)d(\d+)$/){$x[0]=256if$x[0]>256;push@stack,$x[1]?int(rand$x[1])+1:0 while$x[0]--}
-			push @stack,0+$_ and next if /^[-+]?\d+(\.\d+)?$/;
+			if(my@x=/^(\d+)d([\d%]+)$/){$x[1]=100if$x[1]eq"%";$x[0]=256if$x[0]>256;push@stack,$x[1]?int(rand$x[1])+1:0 while$x[0]--}
+			if(/^(\d+)d[Ff]$/){my$x=$1;$x=256if$x>256;push@stack,(-1,0,1)[rand(3)]while$x--}
+			{"+"=>sub{$_[1]+=$_[0]},"-"=>sub{$_[1]-=$_[0]}}->{$1}(($2/100)*$stack[-1],$stack[-1]) xor next if /^([\+\-])(\d+(\.\d+)?)\%/ && scalar(@stack)>0;
+			push @stack,(0+$_)/(($2 eq "%")?100:1) and next if /^[-+]?\d+(\.\d+)?(%)?$/;
 			push @stack,0+$_ and next if /^[-+]?\.\d+$/;
 			push @stack,0+$_ and next if /^[-+]?\d+(\.\d+)?e\d+(\.\d+)?$/;
-			{"*"=>sub{$_[1]*=shift},"+"=>sub{$_[1]+=shift()*pop},"-"=>sub{$_[1]-=shift()*pop}}->{$1}($2/100,$stack[-1]) if /([\+\-\*])(\d+(\.\d+)?)\%/;
 			$_=lc$_;
 			if(exists($op{$_})){
 				undef $@;
