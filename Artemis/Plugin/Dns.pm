@@ -64,7 +64,7 @@ sub input{
 					push @{$a{$record->type}}, $record->rdatastr;
 				}
 			}
-			$output .= " $_ ".join ",",@{$a{$_}} for keys %a;
+			$output .= " $_ ".join ", ",@{$a{$_}} for keys %a;
 		}
 		$output =~ tr/\r\n\t//d;
 		$conn->message($msg->to,$msg->user.": $output");
