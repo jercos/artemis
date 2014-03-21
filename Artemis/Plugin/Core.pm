@@ -25,8 +25,9 @@ time => sub{eval{my $d =DateTime->now(time_zone=>(shift||'local'))->strftime("%a
 timer => sub{my($a,$s,$c,$m)=@_;return "Try again, with less fail this time." unless $a=~/^((?:\d+[hms]?)+)(?: *(.{0,60}))$/;$s->{timers}{time()+timetosecs($1)}=[$c,$m,$2];return "Timer added."},
 beep => sub{my($a,$s,$c,$m)=@_;my$t;return "Fail." unless $a=~/^(.*) {2,}(.*)$/ && ($t=parsedate($1));$s->{timers}{$t}=[$c,$m,$2];return "Set a timer named \"$2\" for ".localtime($t)},
 beepcos => sub{my($a,$s,$c,$m)=@_;return unless $m->level>512;return "Beeping Jeremy, squirrel of ".open(BEEP,"-|","/home/jercos/bin/beepcos")},
-bofh => sub{my($a,$s,$c,$m)=@_;open my $bofhh,'/home/jercos/artemis/rev/1/excuses.txt' or return "Excuses file not found.";return((<$bofhh>)[$a-1])if$a>0;my $bofh;rand($.)<1 and ($bofh="$.: $_") while <$bofhh>;return $bofh},
+bofh => sub{my($a,$s,$c,$m)=@_;open my $bofhh,'excuses.txt' or return "Excuses file not found.";return((<$bofhh>)[$a-1])if$a>0;my $bofh;rand($.)<1 and ($bofh="$.: $_") while <$bofhh>;return $bofh},
 forge => sub{my($a,$s,$c,$m)=@_;return unless $m->level>512;my($cnum,$targ,$msg)=split(/ /,$a,3);print STDERR "Forging '$msg' at c$cnum $targ\n";$c->{main}->incoming($c->{main}{connections}[$cnum],Artemis::Message->new(level=>$m->level,user=>$m->user,text=>$msg,to=>$targ,via=>$targ,token=>$m->token,nick=>"artemis"))},
+iksay => sub{join("",map{(ord()<127&&ord()>32)?chr(0xFEE0+ord):$_}split('',shift))}
 		},
 		timers => {},
 	};
